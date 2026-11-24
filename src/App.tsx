@@ -17,6 +17,7 @@ import { ScenarioSimulator } from './components/ScenarioSimulator';
 import { FormulaStudioModal } from './components/FormulaStudioModal';
 import { TimelineBrush } from './components/TimelineBrush';
 import { CorrelationMatrix } from './components/CorrelationMatrix';
+import { ShortcutsModal } from './components/ShortcutsModal';
 import { buildChartRecommendations, aggregateChartData } from './engine/recommender';
 import { filterRows } from './engine/filter';
 import { deriveFilteredSchema } from './engine/profiler';
@@ -36,6 +37,7 @@ export function App() {
   const [isTelemetryOpen, setIsTelemetryOpen] = useState(false);
   const [isSqlStudioOpen, setIsSqlStudioOpen] = useState(false);
   const [isFormulaStudioOpen, setIsFormulaStudioOpen] = useState(false);
+  const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
   const [persona, setPersona] = useState<ExecutiveLens>('cfo');
 
   // React 19 Concurrent Transition hook for non-blocking UI rendering
@@ -318,6 +320,7 @@ export function App() {
         onToggleTelemetry={() => setIsTelemetryOpen(!isTelemetryOpen)}
         onOpenSqlStudio={() => setIsSqlStudioOpen(true)}
         onOpenFormulaStudio={() => setIsFormulaStudioOpen(true)}
+        onOpenShortcuts={() => setIsShortcutsOpen(true)}
       />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-8">
@@ -482,6 +485,12 @@ export function App() {
               isOpen={isTelemetryOpen}
               onClose={() => setIsTelemetryOpen(false)}
               isPendingTransition={isPending}
+            />
+
+            {/* Keyboard Shortcuts Cheat Sheet */}
+            <ShortcutsModal
+              isOpen={isShortcutsOpen}
+              onClose={() => setIsShortcutsOpen(false)}
             />
           </div>
         )}

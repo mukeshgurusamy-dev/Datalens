@@ -14,6 +14,7 @@ interface HeaderProps {
   onToggleTelemetry?: () => void;
   onOpenSqlStudio?: () => void;
   onOpenFormulaStudio?: () => void;
+  onOpenShortcuts?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -27,6 +28,7 @@ export const Header: React.FC<HeaderProps> = ({
   onToggleTelemetry,
   onOpenSqlStudio,
   onOpenFormulaStudio,
+  onOpenShortcuts,
 }) => {
   return (
     <header className="w-full border-b border-zinc-800/80 bg-[#0c0c0e]/80 backdrop-blur-md sticky top-0 z-30">
@@ -153,6 +155,16 @@ export const Header: React.FC<HeaderProps> = ({
               <RefreshCw className="w-3.5 h-3.5 text-zinc-400" />
               <span>Change Data</span>
             </button>
+
+            {onOpenShortcuts && (
+              <button
+                onClick={onOpenShortcuts}
+                title="Keyboard Shortcuts (?)"
+                className="hidden sm:inline-flex items-center justify-center w-8 h-8 rounded-lg border border-zinc-800 bg-zinc-900 hover:bg-zinc-850 text-zinc-400 hover:text-white transition-all text-xs font-mono font-bold"
+              >
+                ?
+              </button>
+            )}
           </div>
         )}
       </div>
