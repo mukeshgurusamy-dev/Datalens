@@ -445,7 +445,8 @@ export function App() {
             <ExportModal
               isOpen={isExportModalOpen}
               onClose={() => setIsExportModalOpen(false)}
-              datasetName={dataset.name}
+              dataset={activeDataset || dataset}
+              kpis={kpis}
             />
 
             {/* Instant Permalinks Share Modal */}

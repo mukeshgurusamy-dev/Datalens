@@ -36,4 +36,31 @@ describe('Boardroom Report Exporter - Automated Quality & Accuracy Suite', () =>
 
     expect(calculatedPages).toBeGreaterThanOrEqual(2);
   });
+
+  it('formats executive Markdown dossiers with KPI summaries and dataset profiles', async () => {
+    const { generateExecutiveMarkdownBriefing } = await import('../exporter');
+    const mockSchema = {
+      id: 'test-1',
+      name: 'Q3 SaaS Growth',
+      slug: 'q3-saas-growth',
+      rowCount: 100,
+      columnCount: 2,
+      columns: [
+        { name: 'mrr', type: 'number', nullableCount: 0, uniqueCount: 50 },
+        { name: 'tier', type: 'category', nullableCount: 0, uniqueCount: 3 },
+      ],
+      rows: [],
+      parsedAt: Date.now(),
+    } as any;
+
+    const kpis = [
+      { id: '1', title: 'Total MRR', value: '$240,000', subtitle: 'Sum' },
+    ];
+
+    const md = generateExecutiveMarkdownBriefing(mockSchema, kpis, 'Enterprise tier grew 30% QoQ.');
+    expect(md).toContain('# Executive Briefing: Q3 SaaS Growth');
+    expect(md).toContain('Total MRR');
+    expect(md).toContain('$240,000');
+    expect(md).toContain('Enterprise tier grew 30% QoQ.');
+  });
 });
