@@ -13,7 +13,7 @@
  * ─ CSS-in-JSX animations: Inline bar width transitions via style objects
  */
 
-import { useReducer, useMemo, useCallback, useState } from 'react';
+import { useReducer, useMemo, useCallback, useState, useEffect } from 'react';
 import { Sliders, TrendingUp, TrendingDown, RotateCcw, ChevronDown, ChevronUp, Minus } from 'lucide-react';
 import type { DatasetSchema } from '../types/dataset';
 import {
@@ -86,6 +86,21 @@ export const ScenarioSimulator: React.FC<ScenarioSimulatorProps> = ({ dataset })
     () => dataset.columns.filter((c) => c.type === 'category' || c.type === 'date').map((c) => c.name),
     [dataset.columns]
   );
+
+  // Sync targetCol and groupCol if dataset changes or if current columns are not in list
+  useEffect(() => {
+    if (columnsChoice) {
+      const targetValid = numericCols.includes(state.targetCol);
+      const groupValid = categoryCols.includes(state.groupCol);
+      if (!targetValid || !groupValid) {
+        dispatch({
+          type: 'SET_COLUMNS',
+          targetCol: columnsChoice.numericCol,
+          groupCol: columnsChoice.categoryCol,
+        });
+      }
+    }
+  }, [columnsChoice, numericCols, categoryCols, state.targetCol, state.groupCol]);
 
   // Run simulation — memoized until parameters or data change
   const result = useMemo(() => {

@@ -138,6 +138,9 @@ export const FormulaStudioModal: React.FC<FormulaStudioModalProps> = ({
     if (full.error) return;
     onAddColumn(columnName.trim() || 'calculated_column', full.values);
     setIsAdded(true);
+    setTimeout(() => {
+      onClose();
+    }, 700);
   };
 
   if (!isOpen) return null;

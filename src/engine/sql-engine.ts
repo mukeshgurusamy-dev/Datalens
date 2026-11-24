@@ -367,6 +367,8 @@ export function convertSqlResultToChart(
     yAxis,
     description: `Generated from in-memory SQL Studio (${result.rows.length} rows)`,
     data: result.rows.map((r) => ({
+      [xAxis]: String(r[xAxis] ?? ''),
+      [yAxis]: Number(r[yAxis] ?? 0),
       name: String(r[xAxis] ?? ''),
       value: Number(r[yAxis] ?? 0),
     })),

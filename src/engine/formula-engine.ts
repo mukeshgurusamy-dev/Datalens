@@ -283,8 +283,17 @@ function evaluateNode(node: ASTNode, row: RowData): number | string {
       return node.value;
 
     case 'column': {
-      const val = row[node.name];
-      if (val === undefined) throw new FormulaError(`Column not found: [${node.name}]`);
+      let val = row[node.name];
+      if (val === undefined) {
+        // Case-insensitive fallback
+        const lower = node.name.toLowerCase();
+        const matchedKey = Object.keys(row).find((k) => k.toLowerCase() === lower);
+        if (matchedKey) {
+          val = row[matchedKey];
+        } else {
+          throw new FormulaError(`Column not found: [${node.name}]`);
+        }
+      }
       if (val === null) return 0;
       if (typeof val === 'boolean') return val ? 1 : 0;
       if (typeof val === 'number') return val;

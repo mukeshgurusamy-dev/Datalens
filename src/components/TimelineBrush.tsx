@@ -13,7 +13,7 @@
  * ─ Memoized callbacks preventing unnecessary child re-renders
  */
 
-import React, { useRef, useCallback, useMemo } from 'react';
+import React, { useRef, useCallback, useMemo, useEffect } from 'react';
 import { Calendar, ZoomIn } from 'lucide-react';
 import { useTimelineBrush } from '../hooks/useTimelineBrush';
 import type { DatasetSchema } from '../types/dataset';
@@ -35,6 +35,22 @@ export const TimelineBrush: React.FC<TimelineBrushProps> = ({
 }) => {
   const brush = useTimelineBrush(dataset.rows, dateColumnName);
   const trackRef = useRef<HTMLDivElement>(null);
+  const isFirstRender = useRef(true);
+
+  // Synchronize date range changes with parent filter state
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    if (onRangeChange && brush.startDate && brush.endDate) {
+      onRangeChange(
+        brush.activePreset === 'all' ? '' : brush.startDate,
+        brush.activePreset === 'all' ? '' : brush.endDate,
+        brush.filteredIndices
+      );
+    }
+  }, [brush.range, brush.activePreset, brush.startDate, brush.endDate, brush.filteredIndices, onRangeChange]);
 
   // Build sparkline data: aggregate numeric values by date
   const sparkline = useMemo(() => {

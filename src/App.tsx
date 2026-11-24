@@ -262,10 +262,13 @@ export function App() {
       ...row,
       [columnName]: values[i] ?? null,
     }));
+    const filteredExistingCols = dataset.columns.filter(
+      (c) => c.name.toLowerCase() !== columnName.toLowerCase()
+    );
     setDataset({
       ...dataset,
-      columns: [...dataset.columns, newColumn],
-      columnCount: dataset.columnCount + 1,
+      columns: [...filteredExistingCols, newColumn],
+      columnCount: filteredExistingCols.length + 1,
       rows: newRows,
     });
   };
@@ -373,6 +376,12 @@ export function App() {
                   <TimelineBrush
                     dataset={dataset}
                     dateColumnName={dateColumnName}
+                    onRangeChange={(startDate, endDate) => {
+                      handleFilterChange((prev) => ({
+                        ...prev,
+                        dateRange: startDate && endDate ? { start: startDate, end: endDate } : undefined,
+                      }));
+                    }}
                   />
                 </CardErrorBoundary>
               </div>
@@ -460,7 +469,7 @@ export function App() {
             <FormulaStudioModal
               isOpen={isFormulaStudioOpen}
               onClose={() => setIsFormulaStudioOpen(false)}
-              dataset={activeDataset || dataset}
+              dataset={dataset}
               onAddColumn={handleAddFormulaColumn}
             />
 
