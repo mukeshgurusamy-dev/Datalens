@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useTransition, Profiler, type ProfilerOnRenderCallback } from 'react';
 import { Header } from './components/Header';
 import { Dropzone } from './components/Dropzone';
 import { FilterBar } from './components/FilterBar';
@@ -9,13 +9,18 @@ import { ExportModal } from './components/ExportModal';
 import { ShareModal } from './components/ShareModal';
 import { DataTable } from './components/DataTable';
 import { AiBriefing } from './components/AiBriefing';
+import { PerformanceHud } from './components/PerformanceHud';
+import { TimeTravelDrawer } from './components/TimeTravelDrawer';
+import { CardErrorBoundary } from './components/CardErrorBoundary';
 import { buildChartRecommendations, aggregateChartData } from './engine/recommender';
 import { filterRows } from './engine/filter';
 import { deriveFilteredSchema } from './engine/profiler';
 import { decodeDashboardState, reconstructDatasetFromPayload } from './engine/permalink';
 import { buildPersonaKpiCards, type ExecutiveLens } from './engine/personas';
+import { telemetryStore } from './engine/telemetry-store';
+import { historyStore, type DashboardSnapshot } from './engine/history-store';
 import type { DatasetSchema, DataFilterState, ChartRecommendation } from './types/dataset';
-import { Layers } from 'lucide-react';
+import { Layers, RefreshCw } from 'lucide-react';
 
 export function App() {
   const [dataset, setDataset] = useState<DatasetSchema | null>(null);
@@ -23,7 +28,11 @@ export function App() {
   const [editingChart, setEditingChart] = useState<ChartRecommendation | null>(null);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [isTelemetryOpen, setIsTelemetryOpen] = useState(false);
   const [persona, setPersona] = useState<ExecutiveLens>('cfo');
+
+  // React 19 Concurrent Transition hook for non-blocking UI rendering
+  const [isPending, startTransition] = useTransition();
 
   const [filters, setFilters] = useState<DataFilterState>({
     searchQuery: '',
@@ -39,15 +48,35 @@ export function App() {
       if (payload) {
         const restoredDataset = reconstructDatasetFromPayload(payload);
         setDataset(restoredDataset);
-        if (payload.filters) {
-          setFilters(payload.filters);
-        }
-        if (payload.customCharts) {
-          setCustomCharts(payload.customCharts);
-        }
+        const restoredFilters = payload.filters || { searchQuery: '', selectedCategories: {} };
+        const restoredCharts = payload.customCharts || {};
+        setFilters(restoredFilters);
+        setCustomCharts(restoredCharts);
+        historyStore.init({
+          label: 'Shared Dashboard Link',
+          timestamp: Date.now(),
+          filters: restoredFilters,
+          customCharts: restoredCharts,
+          persona: 'cfo',
+        });
       }
     }
   }, []);
+
+  // Initialize history when a new dataset is loaded
+  const handleDatasetLoaded = (newDataset: DatasetSchema) => {
+    setDataset(newDataset);
+    const initialFilters = { searchQuery: '', selectedCategories: {} };
+    setFilters(initialFilters);
+    setCustomCharts({});
+    historyStore.init({
+      label: `Loaded ${newDataset.name}`,
+      timestamp: Date.now(),
+      filters: initialFilters,
+      customCharts: {},
+      persona: 'cfo',
+    });
+  };
 
   // Find date column name if one exists
   const dateColumnName = useMemo(() => {
@@ -71,6 +100,21 @@ export function App() {
     return activeDataset ? buildPersonaKpiCards(activeDataset, persona) : [];
   }, [activeDataset, persona]);
 
+  // Filter change dispatcher with Concurrent Transition scheduling & History push
+  const handleFilterChange = (nextFilters: DataFilterState | ((prev: DataFilterState) => DataFilterState)) => {
+    startTransition(() => {
+      setFilters((prev) => {
+        const resolved = typeof nextFilters === 'function' ? nextFilters(prev) : nextFilters;
+        historyStore.push('Updated Filters', {
+          filters: resolved,
+          customCharts,
+          persona,
+        });
+        return resolved;
+      });
+    });
+  };
+
   // Interactive direct cross-filtering from clicking chart bars or slices
   const handleCrossFilter = (colName: string, value: string) => {
     const current = filters.selectedCategories[colName] || [];
@@ -78,13 +122,34 @@ export function App() {
       ? current.filter((v) => v !== value)
       : [...current, value];
 
-    setFilters((prev) => ({
-      ...prev,
+    const nextFilters: DataFilterState = {
+      ...filters,
       selectedCategories: {
-        ...prev.selectedCategories,
+        ...filters.selectedCategories,
         [colName]: updated,
       },
-    }));
+    };
+
+    startTransition(() => {
+      setFilters(nextFilters);
+      historyStore.push(`Cross-Filtered ${colName}: ${value}`, {
+        filters: nextFilters,
+        customCharts,
+        persona,
+      });
+    });
+  };
+
+  // Persona change dispatcher with Concurrent Transition scheduling
+  const handlePersonaChange = (nextPersona: ExecutiveLens) => {
+    startTransition(() => {
+      setPersona(nextPersona);
+      historyStore.push(`Switched to ${nextPersona.toUpperCase()} Lens`, {
+        filters,
+        customCharts,
+        persona: nextPersona,
+      });
+    });
   };
 
   // Re-computed charts, merged with user customizations and dynamically aggregated from filtered activeDataset
@@ -126,11 +191,28 @@ export function App() {
   }, [charts, editingChart]);
 
   const handleUpdateChart = (updated: ChartRecommendation) => {
-    setCustomCharts((prev) => ({
-      ...prev,
+    const updatedCharts = {
+      ...customCharts,
       [updated.id]: updated,
-    }));
-    setEditingChart(updated);
+    };
+    startTransition(() => {
+      setCustomCharts(updatedCharts);
+      setEditingChart(updated);
+      historyStore.push(`Customized ${updated.title}`, {
+        filters,
+        customCharts: updatedCharts,
+        persona,
+      });
+    });
+  };
+
+  // Time-travel snapshot restorer
+  const handleRestoreSnapshot = (snapshot: DashboardSnapshot) => {
+    startTransition(() => {
+      setFilters(snapshot.filters);
+      setCustomCharts(snapshot.customCharts);
+      setPersona(snapshot.persona);
+    });
   };
 
   const handleReset = () => {
@@ -140,117 +222,169 @@ export function App() {
     setIsExportModalOpen(false);
     setIsShareModalOpen(false);
     setFilters({ searchQuery: '', selectedCategories: {} });
+    historyStore.clear();
     window.location.hash = '';
   };
 
+  // React Native Profiler callback tracking fiber commits
+  const handleProfilerRender: ProfilerOnRenderCallback = (
+    id,
+    phase,
+    actualDuration,
+    baseDuration,
+    startTime,
+    commitTime
+  ) => {
+    telemetryStore.recordCommit({
+      id,
+      phase,
+      actualDuration,
+      baseDuration,
+      startTime,
+      commitTime,
+    });
+  };
+
   return (
-    <div className="min-h-screen bg-[#09090b] text-[#f4f4f5] flex flex-col font-sans">
-      <Header
-        dataset={dataset}
-        onReset={handleReset}
-        onExport={() => setIsExportModalOpen(true)}
-        onShare={() => setIsShareModalOpen(true)}
-        activePersona={persona}
-        onPersonaChange={setPersona}
-      />
+    <Profiler id="DataLensApp" onRender={handleProfilerRender}>
+      <div className="min-h-screen bg-[#09090b] text-[#f4f4f5] flex flex-col font-sans">
+        <Header
+          dataset={dataset}
+          onReset={handleReset}
+          onExport={() => setIsExportModalOpen(true)}
+          onShare={() => setIsShareModalOpen(true)}
+          activePersona={persona}
+          onPersonaChange={handlePersonaChange}
+          isTelemetryOpen={isTelemetryOpen}
+          onToggleTelemetry={() => setIsTelemetryOpen(!isTelemetryOpen)}
+        />
 
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-8">
-        {!dataset ? (
-          <Dropzone onDatasetLoaded={setDataset} />
-        ) : (
-          <div>
-            {/* Top Insight Badge */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 pb-6 border-b border-zinc-800/80">
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
-                    {dataset.name}
-                  </h1>
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-medium">
-                    Live Analysis
-                  </span>
+        <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-8">
+          {!dataset ? (
+            <Dropzone onDatasetLoaded={handleDatasetLoaded} />
+          ) : (
+            <div>
+              {/* Top Insight Badge with Concurrent Transition indicator */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 pb-6 border-b border-zinc-800/80">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+                      {dataset.name}
+                    </h1>
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-medium">
+                      Live Analysis
+                    </span>
+                    {isPending && (
+                      <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 font-mono animate-pulse">
+                        <RefreshCw className="w-3 h-3 animate-spin" />
+                        Transitioning...
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-zinc-400">
+                    Profiled {dataset.rowCount.toLocaleString()} records across {dataset.columnCount} columns.
+                  </p>
                 </div>
-                <p className="text-xs text-zinc-400">
-                  Profiled {dataset.rowCount.toLocaleString()} records across {dataset.columnCount} columns.
-                </p>
+
+                <div className="flex items-center gap-2">
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-xs text-zinc-400">
+                    <Layers className="w-3.5 h-3.5 text-blue-400" />
+                    <span>
+                      {dataset.columns.filter((c) => c.type === 'number').length} Numeric,{' '}
+                      {dataset.columns.filter((c) => c.type === 'category').length} Categories
+                    </span>
+                  </div>
+                </div>
               </div>
 
-              <div className="flex items-center gap-2">
-                <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-xs text-zinc-400">
-                  <Layers className="w-3.5 h-3.5 text-blue-400" />
-                  <span>
-                    {dataset.columns.filter((c) => c.type === 'number').length} Numeric,{' '}
-                    {dataset.columns.filter((c) => c.type === 'category').length} Categories
-                  </span>
-                </div>
+              {/* Global Interactive Filter Ribbon (Ignored in PDF/PNG export) */}
+              <div data-export-ignore="true">
+                <FilterBar
+                  columns={dataset.columns}
+                  filters={filters}
+                  onFilterChange={handleFilterChange}
+                  totalRowCount={dataset.rowCount}
+                  filteredRowCount={filteredRows.length}
+                />
               </div>
-            </div>
 
-            {/* Global Interactive Filter Ribbon (Ignored in PDF/PNG export) */}
-            <div data-export-ignore="true">
-              <FilterBar
+              {/* Printable & Exportable Canvas Container */}
+              <div id="dashboard-printable-area" className="p-2 sm:p-4 rounded-2xl bg-[#09090b]">
+                {/* Executive AI Briefing & Natural Language Insights */}
+                {activeDataset && (
+                  <CardErrorBoundary fallbackTitle="AI Briefing Anomaly">
+                    <AiBriefing schema={activeDataset} />
+                  </CardErrorBoundary>
+                )}
+
+                {/* Executive KPI Cards */}
+                <CardErrorBoundary fallbackTitle="Executive KPI Anomaly">
+                  <KpiRow cards={kpis} />
+                </CardErrorBoundary>
+
+                {/* Recommended Charts with Direct Interactive Cross-Filtering */}
+                <CardErrorBoundary fallbackTitle="Visualization Engine Anomaly">
+                  <ChartGrid
+                    charts={charts}
+                    onCustomizeChart={(c) => setEditingChart(c)}
+                    onCrossFilter={handleCrossFilter}
+                    activeFilters={filters.selectedCategories}
+                  />
+                </CardErrorBoundary>
+              </div>
+
+              {/* Raw Records Table with 60 FPS Virtual Grid & Pagination */}
+              {activeDataset && (
+                <CardErrorBoundary fallbackTitle="Data Grid Anomaly">
+                  <DataTable dataset={activeDataset} />
+                </CardErrorBoundary>
+              )}
+
+              {/* Chart Customizer Slide-Over */}
+              <ChartCustomizer
+                chart={activeEditingChart}
                 columns={dataset.columns}
+                onClose={() => setEditingChart(null)}
+                onUpdateChart={handleUpdateChart}
+              />
+
+              {/* Boardroom Export Modal */}
+              <ExportModal
+                isOpen={isExportModalOpen}
+                onClose={() => setIsExportModalOpen(false)}
+                datasetName={dataset.name}
+              />
+
+              {/* Instant Permalinks Share Modal */}
+              <ShareModal
+                isOpen={isShareModalOpen}
+                onClose={() => setIsShareModalOpen(false)}
+                dataset={dataset}
                 filters={filters}
-                onFilterChange={setFilters}
-                totalRowCount={dataset.rowCount}
-                filteredRowCount={filteredRows.length}
+                customCharts={customCharts}
+              />
+
+              {/* Interactive Time-Travel History Drawer & Undo/Redo Engine */}
+              <TimeTravelDrawer onRestoreSnapshot={handleRestoreSnapshot} />
+
+              {/* React 19 Profiler & Telemetry HUD Overlay */}
+              <PerformanceHud
+                isOpen={isTelemetryOpen}
+                onClose={() => setIsTelemetryOpen(false)}
+                isPendingTransition={isPending}
               />
             </div>
+          )}
+        </main>
 
-            {/* Printable & Exportable Canvas Container */}
-            <div id="dashboard-printable-area" className="p-2 sm:p-4 rounded-2xl bg-[#09090b]">
-              {/* Executive AI Briefing & Natural Language Insights */}
-              {activeDataset && <AiBriefing schema={activeDataset} />}
-
-              {/* Executive KPI Cards */}
-              <KpiRow cards={kpis} />
-
-              {/* Recommended Charts with Direct Interactive Cross-Filtering */}
-              <ChartGrid
-                charts={charts}
-                onCustomizeChart={(c) => setEditingChart(c)}
-                onCrossFilter={handleCrossFilter}
-                activeFilters={filters.selectedCategories}
-              />
-            </div>
-
-            {/* Raw Records Table */}
-            {activeDataset && <DataTable dataset={activeDataset} />}
-
-            {/* Chart Customizer Slide-Over */}
-            <ChartCustomizer
-              chart={activeEditingChart}
-              columns={dataset.columns}
-              onClose={() => setEditingChart(null)}
-              onUpdateChart={handleUpdateChart}
-            />
-
-            {/* Boardroom Export Modal */}
-            <ExportModal
-              isOpen={isExportModalOpen}
-              onClose={() => setIsExportModalOpen(false)}
-              datasetName={dataset.name}
-            />
-
-            {/* Instant Permalinks Share Modal */}
-            <ShareModal
-              isOpen={isShareModalOpen}
-              onClose={() => setIsShareModalOpen(false)}
-              dataset={dataset}
-              filters={filters}
-              customCharts={customCharts}
-            />
-          </div>
-        )}
-      </main>
-
-      {/* Footer */}
-      <footer className="border-t border-zinc-850 py-6 text-center text-xs text-zinc-500">
-        <p>
-          DataLens Engine — Built with React 19, TypeScript, Tailwind CSS & Motion
-        </p>
-      </footer>
-    </div>
+        {/* Footer */}
+        <footer className="border-t border-zinc-850 py-6 text-center text-xs text-zinc-500">
+          <p>
+            DataLens Engine — Built with React 19 Concurrent Architecture, TypeScript, Tailwind CSS & Motion
+          </p>
+        </footer>
+      </div>
+    </Profiler>
   );
 }
 

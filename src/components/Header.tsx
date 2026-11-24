@@ -1,5 +1,5 @@
 import React from 'react';
-import { BarChart3, RefreshCw, Database, Download, Share2 } from 'lucide-react';
+import { BarChart3, RefreshCw, Database, Download, Share2, Activity } from 'lucide-react';
 import type { DatasetSchema } from '../types/dataset';
 import type { ExecutiveLens } from '../engine/personas';
 
@@ -10,6 +10,8 @@ interface HeaderProps {
   onShare?: () => void;
   activePersona?: ExecutiveLens;
   onPersonaChange?: (persona: ExecutiveLens) => void;
+  isTelemetryOpen?: boolean;
+  onToggleTelemetry?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -19,6 +21,8 @@ export const Header: React.FC<HeaderProps> = ({
   onShare,
   activePersona,
   onPersonaChange,
+  isTelemetryOpen = false,
+  onToggleTelemetry,
 }) => {
   return (
     <header className="w-full border-b border-zinc-800/80 bg-[#0c0c0e]/80 backdrop-blur-md sticky top-0 z-30">
@@ -73,6 +77,25 @@ export const Header: React.FC<HeaderProps> = ({
                   </button>
                 ))}
               </div>
+            )}
+
+            {/* React 19 Telemetry HUD Trigger */}
+            {onToggleTelemetry && (
+              <button
+                onClick={onToggleTelemetry}
+                title="Toggle React 19 Profiler & Telemetry HUD"
+                className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-lg border transition-all ${
+                  isTelemetryOpen
+                    ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 shadow-xs'
+                    : 'text-zinc-300 hover:text-white bg-zinc-900 hover:bg-zinc-850 border-zinc-800'
+                }`}
+              >
+                <div className="relative">
+                  <Activity className="w-3.5 h-3.5 text-emerald-400" />
+                  <span className="absolute -top-0.5 -right-0.5 w-1 h-1 rounded-full bg-emerald-400 animate-pulse" />
+                </div>
+                <span className="hidden sm:inline">Telemetry</span>
+              </button>
             )}
 
             {onShare && (
