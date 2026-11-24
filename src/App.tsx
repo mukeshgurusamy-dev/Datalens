@@ -65,10 +65,7 @@ export function App() {
 
   // Initialize history when a new dataset is loaded
   const handleDatasetLoaded = (newDataset: DatasetSchema) => {
-    setDataset(newDataset);
     const initialFilters = { searchQuery: '', selectedCategories: {} };
-    setFilters(initialFilters);
-    setCustomCharts({});
     historyStore.init({
       label: `Loaded ${newDataset.name}`,
       timestamp: Date.now(),
@@ -76,6 +73,10 @@ export function App() {
       customCharts: {},
       persona: 'cfo',
     });
+    setFilters(initialFilters);
+    setCustomCharts({});
+    setEditingChart(null);
+    setDataset(newDataset);
   };
 
   // Find date column name if one exists
@@ -102,16 +103,14 @@ export function App() {
 
   // Filter change dispatcher with Concurrent Transition scheduling & History push
   const handleFilterChange = (nextFilters: DataFilterState | ((prev: DataFilterState) => DataFilterState)) => {
+    const resolved = typeof nextFilters === 'function' ? nextFilters(filters) : nextFilters;
+    historyStore.push('Updated Filters', {
+      filters: resolved,
+      customCharts,
+      persona,
+    });
     startTransition(() => {
-      setFilters((prev) => {
-        const resolved = typeof nextFilters === 'function' ? nextFilters(prev) : nextFilters;
-        historyStore.push('Updated Filters', {
-          filters: resolved,
-          customCharts,
-          persona,
-        });
-        return resolved;
-      });
+      setFilters(resolved);
     });
   };
 
@@ -130,25 +129,26 @@ export function App() {
       },
     };
 
+    historyStore.push(`Cross-Filtered ${colName}: ${value}`, {
+      filters: nextFilters,
+      customCharts,
+      persona,
+    });
+
     startTransition(() => {
       setFilters(nextFilters);
-      historyStore.push(`Cross-Filtered ${colName}: ${value}`, {
-        filters: nextFilters,
-        customCharts,
-        persona,
-      });
     });
   };
 
   // Persona change dispatcher with Concurrent Transition scheduling
   const handlePersonaChange = (nextPersona: ExecutiveLens) => {
+    historyStore.push(`Switched to ${nextPersona.toUpperCase()} Lens`, {
+      filters,
+      customCharts,
+      persona: nextPersona,
+    });
     startTransition(() => {
       setPersona(nextPersona);
-      historyStore.push(`Switched to ${nextPersona.toUpperCase()} Lens`, {
-        filters,
-        customCharts,
-        persona: nextPersona,
-      });
     });
   };
 
@@ -195,14 +195,14 @@ export function App() {
       ...customCharts,
       [updated.id]: updated,
     };
+    historyStore.push(`Customized ${updated.title}`, {
+      filters,
+      customCharts: updatedCharts,
+      persona,
+    });
     startTransition(() => {
       setCustomCharts(updatedCharts);
       setEditingChart(updated);
-      historyStore.push(`Customized ${updated.title}`, {
-        filters,
-        customCharts: updatedCharts,
-        persona,
-      });
     });
   };
 
@@ -226,7 +226,7 @@ export function App() {
     window.location.hash = '';
   };
 
-  // React Native Profiler callback tracking fiber commits
+  // React Native Profiler callback tracking fiber commits only on dashboard area
   const handleProfilerRender: ProfilerOnRenderCallback = (
     id,
     phase,
@@ -235,80 +235,82 @@ export function App() {
     startTime,
     commitTime
   ) => {
-    telemetryStore.recordCommit({
-      id,
-      phase,
-      actualDuration,
-      baseDuration,
-      startTime,
-      commitTime,
-    });
+    if (id === 'DataLensCanvas') {
+      telemetryStore.recordCommit({
+        id,
+        phase,
+        actualDuration,
+        baseDuration,
+        startTime,
+        commitTime,
+      });
+    }
   };
 
   return (
-    <Profiler id="DataLensApp" onRender={handleProfilerRender}>
-      <div className="min-h-screen bg-[#09090b] text-[#f4f4f5] flex flex-col font-sans">
-        <Header
-          dataset={dataset}
-          onReset={handleReset}
-          onExport={() => setIsExportModalOpen(true)}
-          onShare={() => setIsShareModalOpen(true)}
-          activePersona={persona}
-          onPersonaChange={handlePersonaChange}
-          isTelemetryOpen={isTelemetryOpen}
-          onToggleTelemetry={() => setIsTelemetryOpen(!isTelemetryOpen)}
-        />
+    <div className="min-h-screen bg-[#09090b] text-[#f4f4f5] flex flex-col font-sans">
+      <Header
+        dataset={dataset}
+        onReset={handleReset}
+        onExport={() => setIsExportModalOpen(true)}
+        onShare={() => setIsShareModalOpen(true)}
+        activePersona={persona}
+        onPersonaChange={handlePersonaChange}
+        isTelemetryOpen={isTelemetryOpen}
+        onToggleTelemetry={() => setIsTelemetryOpen(!isTelemetryOpen)}
+      />
 
-        <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-8">
-          {!dataset ? (
-            <Dropzone onDatasetLoaded={handleDatasetLoaded} />
-          ) : (
-            <div>
-              {/* Top Insight Badge with Concurrent Transition indicator */}
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 pb-6 border-b border-zinc-800/80">
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
-                      {dataset.name}
-                    </h1>
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-medium">
-                      Live Analysis
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-8">
+        {!dataset ? (
+          <Dropzone onDatasetLoaded={handleDatasetLoaded} />
+        ) : (
+          <div>
+            {/* Top Insight Badge with Concurrent Transition indicator */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 pb-6 border-b border-zinc-800/80">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+                    {dataset.name}
+                  </h1>
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-medium">
+                    Live Analysis
+                  </span>
+                  {isPending && (
+                    <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 font-mono animate-pulse">
+                      <RefreshCw className="w-3 h-3 animate-spin" />
+                      Transitioning...
                     </span>
-                    {isPending && (
-                      <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 font-mono animate-pulse">
-                        <RefreshCw className="w-3 h-3 animate-spin" />
-                        Transitioning...
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-xs text-zinc-400">
-                    Profiled {dataset.rowCount.toLocaleString()} records across {dataset.columnCount} columns.
-                  </p>
+                  )}
                 </div>
-
-                <div className="flex items-center gap-2">
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-xs text-zinc-400">
-                    <Layers className="w-3.5 h-3.5 text-blue-400" />
-                    <span>
-                      {dataset.columns.filter((c) => c.type === 'number').length} Numeric,{' '}
-                      {dataset.columns.filter((c) => c.type === 'category').length} Categories
-                    </span>
-                  </div>
-                </div>
+                <p className="text-xs text-zinc-400">
+                  Profiled {dataset.rowCount.toLocaleString()} records across {dataset.columnCount} columns.
+                </p>
               </div>
 
-              {/* Global Interactive Filter Ribbon (Ignored in PDF/PNG export) */}
-              <div data-export-ignore="true">
-                <FilterBar
-                  columns={dataset.columns}
-                  filters={filters}
-                  onFilterChange={handleFilterChange}
-                  totalRowCount={dataset.rowCount}
-                  filteredRowCount={filteredRows.length}
-                />
+              <div className="flex items-center gap-2">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-xs text-zinc-400">
+                  <Layers className="w-3.5 h-3.5 text-blue-400" />
+                  <span>
+                    {dataset.columns.filter((c) => c.type === 'number').length} Numeric,{' '}
+                    {dataset.columns.filter((c) => c.type === 'category').length} Categories
+                  </span>
+                </div>
               </div>
+            </div>
 
-              {/* Printable & Exportable Canvas Container */}
+            {/* Global Interactive Filter Ribbon (Ignored in PDF/PNG export) */}
+            <div data-export-ignore="true">
+              <FilterBar
+                columns={dataset.columns}
+                filters={filters}
+                onFilterChange={handleFilterChange}
+                totalRowCount={dataset.rowCount}
+                filteredRowCount={filteredRows.length}
+              />
+            </div>
+
+            {/* Printable & Exportable Canvas Container wrapped in targeted Profiler */}
+            <Profiler id="DataLensCanvas" onRender={handleProfilerRender}>
               <div id="dashboard-printable-area" className="p-2 sm:p-4 rounded-2xl bg-[#09090b]">
                 {/* Executive AI Briefing & Natural Language Insights */}
                 {activeDataset && (
@@ -332,59 +334,59 @@ export function App() {
                   />
                 </CardErrorBoundary>
               </div>
+            </Profiler>
 
-              {/* Raw Records Table with 60 FPS Virtual Grid & Pagination */}
-              {activeDataset && (
-                <CardErrorBoundary fallbackTitle="Data Grid Anomaly">
-                  <DataTable dataset={activeDataset} />
-                </CardErrorBoundary>
-              )}
+            {/* Raw Records Table with 60 FPS Virtual Grid & Pagination */}
+            {activeDataset && (
+              <CardErrorBoundary fallbackTitle="Data Grid Anomaly">
+                <DataTable dataset={activeDataset} />
+              </CardErrorBoundary>
+            )}
 
-              {/* Chart Customizer Slide-Over */}
-              <ChartCustomizer
-                chart={activeEditingChart}
-                columns={dataset.columns}
-                onClose={() => setEditingChart(null)}
-                onUpdateChart={handleUpdateChart}
-              />
+            {/* Chart Customizer Slide-Over */}
+            <ChartCustomizer
+              chart={activeEditingChart}
+              columns={dataset.columns}
+              onClose={() => setEditingChart(null)}
+              onUpdateChart={handleUpdateChart}
+            />
 
-              {/* Boardroom Export Modal */}
-              <ExportModal
-                isOpen={isExportModalOpen}
-                onClose={() => setIsExportModalOpen(false)}
-                datasetName={dataset.name}
-              />
+            {/* Boardroom Export Modal */}
+            <ExportModal
+              isOpen={isExportModalOpen}
+              onClose={() => setIsExportModalOpen(false)}
+              datasetName={dataset.name}
+            />
 
-              {/* Instant Permalinks Share Modal */}
-              <ShareModal
-                isOpen={isShareModalOpen}
-                onClose={() => setIsShareModalOpen(false)}
-                dataset={dataset}
-                filters={filters}
-                customCharts={customCharts}
-              />
+            {/* Instant Permalinks Share Modal */}
+            <ShareModal
+              isOpen={isShareModalOpen}
+              onClose={() => setIsShareModalOpen(false)}
+              dataset={dataset}
+              filters={filters}
+              customCharts={customCharts}
+            />
 
-              {/* Interactive Time-Travel History Drawer & Undo/Redo Engine */}
-              <TimeTravelDrawer onRestoreSnapshot={handleRestoreSnapshot} />
+            {/* Interactive Time-Travel History Drawer & Undo/Redo Engine */}
+            <TimeTravelDrawer onRestoreSnapshot={handleRestoreSnapshot} />
 
-              {/* React 19 Profiler & Telemetry HUD Overlay */}
-              <PerformanceHud
-                isOpen={isTelemetryOpen}
-                onClose={() => setIsTelemetryOpen(false)}
-                isPendingTransition={isPending}
-              />
-            </div>
-          )}
-        </main>
+            {/* React 19 Profiler & Telemetry HUD Overlay (Outside of Profiler) */}
+            <PerformanceHud
+              isOpen={isTelemetryOpen}
+              onClose={() => setIsTelemetryOpen(false)}
+              isPendingTransition={isPending}
+            />
+          </div>
+        )}
+      </main>
 
-        {/* Footer */}
-        <footer className="border-t border-zinc-850 py-6 text-center text-xs text-zinc-500">
-          <p>
-            DataLens Engine — Built with React 19 Concurrent Architecture, TypeScript, Tailwind CSS & Motion
-          </p>
-        </footer>
-      </div>
-    </Profiler>
+      {/* Footer */}
+      <footer className="border-t border-zinc-850 py-6 text-center text-xs text-zinc-500">
+        <p>
+          DataLens Engine — Built with React 19 Concurrent Architecture, TypeScript, Tailwind CSS & Motion
+        </p>
+      </footer>
+    </div>
   );
 }
 

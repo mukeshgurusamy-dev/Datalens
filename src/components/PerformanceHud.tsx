@@ -8,15 +8,12 @@ interface PerformanceHudProps {
   isPendingTransition?: boolean;
 }
 
-export const PerformanceHud: React.FC<PerformanceHudProps> = ({
-  isOpen,
-  onClose,
-  isPendingTransition = false,
-}) => {
+const PerformanceHudContent: React.FC<{
+  onClose: () => void;
+  isPendingTransition: boolean;
+}> = ({ onClose, isPendingTransition }) => {
   const { latestCommit, commits, avgDurationMs, totalCommitCount, maxDurationMs } = useTelemetry();
   const [activeTab, setActiveTab] = useState<'overview' | 'commits'>('overview');
-
-  if (!isOpen) return null;
 
   const actualMs = latestCommit ? Math.round(latestCommit.actualDuration * 100) / 100 : 0;
   const isOptimal = actualMs < 4;
@@ -181,5 +178,20 @@ export const PerformanceHud: React.FC<PerformanceHudProps> = ({
         <span className="text-emerald-400 font-mono">60 FPS Target</span>
       </div>
     </div>
+  );
+};
+
+export const PerformanceHud: React.FC<PerformanceHudProps> = ({
+  isOpen,
+  onClose,
+  isPendingTransition = false,
+}) => {
+  if (!isOpen) return null;
+
+  return (
+    <PerformanceHudContent
+      onClose={onClose}
+      isPendingTransition={isPendingTransition}
+    />
   );
 };

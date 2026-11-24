@@ -28,23 +28,15 @@ let state: TelemetryState = {
 };
 
 const listeners = new Set<() => void>();
-let notifyPending = false;
+let notifyTimer: any = null;
 
 function scheduleNotify() {
-  if (notifyPending) return;
-  notifyPending = true;
-  // Schedule notification outside the synchronous commit phase to prevent render collisions
-  if (typeof queueMicrotask === 'function') {
-    queueMicrotask(() => {
-      notifyPending = false;
-      listeners.forEach((listener) => listener());
-    });
-  } else {
-    setTimeout(() => {
-      notifyPending = false;
-      listeners.forEach((listener) => listener());
-    }, 0);
-  }
+  if (notifyTimer !== null) return;
+  // Throttle notification to at most once every 100ms to guarantee zero update depth issues
+  notifyTimer = setTimeout(() => {
+    notifyTimer = null;
+    listeners.forEach((listener) => listener());
+  }, 100);
 }
 
 export const telemetryStore = {
@@ -81,7 +73,11 @@ export const telemetryStore = {
       avgDurationMs: 0,
       maxDurationMs: 0,
     };
-    scheduleNotify();
+    if (notifyTimer !== null) {
+      clearTimeout(notifyTimer);
+      notifyTimer = null;
+    }
+    listeners.forEach((listener) => listener());
   },
 };
 
