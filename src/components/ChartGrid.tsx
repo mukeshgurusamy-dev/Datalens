@@ -16,7 +16,7 @@ import {
   CartesianGrid,
   Tooltip,
 } from 'recharts';
-import { Sliders, TrendingUp, Sparkles } from 'lucide-react';
+import { Sliders, TrendingUp, Sparkles, BarChart3 } from 'lucide-react';
 import type { ChartRecommendation } from '../types/dataset';
 import { lttbDownsample } from '../engine/lttb';
 import { generateHoltForecast } from '../engine/forecasting';
@@ -91,7 +91,7 @@ const ChartCardItem: React.FC<ChartCardItemProps> = ({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ type: 'spring', stiffness: 300, damping: 25, delay: idx * 0.08 }}
-      className="spotlight-card rounded-2xl p-6 flex flex-col justify-between group"
+      className="spotlight-card rounded-2xl p-6 flex flex-col justify-between group min-w-0 overflow-hidden"
     >
       {/* Header */}
       <div className="flex items-start justify-between gap-4 mb-4">
@@ -141,14 +141,14 @@ const ChartCardItem: React.FC<ChartCardItemProps> = ({
       </div>
 
       {/* Chart Canvas */}
-      <div className="w-full h-72 sm:h-80 pt-2">
+      <div className="w-full h-72 sm:h-80 pt-2 min-h-[300px]" style={{ minHeight: 300 }}>
         {!activeData || activeData.length === 0 ? (
           <div className="w-full h-full flex flex-col items-center justify-center text-zinc-500 border border-dashed border-zinc-800 rounded-xl p-4">
             <p className="text-xs font-medium text-zinc-400">No records match the active filters</p>
             <p className="text-[11px] text-zinc-600 mt-1">Try clearing or adjusting filter values</p>
           </div>
         ) : (
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="100%" height={300} minWidth={100} minHeight={250}>
             {chart.type === 'area' ? (
               <AreaChart data={activeData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <defs>
@@ -337,7 +337,17 @@ export const ChartGrid: React.FC<ChartGridProps> = ({
   activeFilters,
 }) => {
   if (!charts || charts.length === 0) {
-    return null;
+    return (
+      <div className="spotlight-card rounded-2xl p-8 mb-8 text-center border border-dashed border-zinc-800">
+        <div className="w-12 h-12 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 mx-auto mb-3">
+          <BarChart3 className="w-6 h-6" />
+        </div>
+        <h3 className="text-sm font-semibold text-white mb-1">Visualizations Ready to Generate</h3>
+        <p className="text-xs text-zinc-400 max-w-md mx-auto mb-4">
+          DataLens automatically charts your numeric and categorical dimensions. Use SQL Studio to plot custom queries or add calculated metrics in Formula Studio.
+        </p>
+      </div>
+    );
   }
 
   return (

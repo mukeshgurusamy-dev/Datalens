@@ -150,10 +150,10 @@ export function buildChartRecommendations(schema: DatasetSchema): ChartRecommend
 
   const dateCols = schema.columns.filter((c) => c.type === 'date');
   const numericCols = schema.columns.filter((c) => c.type === 'number');
-  const categoryCols = schema.columns.filter((c) => c.type === 'category');
+  const categoryCols = schema.columns.filter((c) => c.type === 'category' || c.type === 'text');
 
   const primaryNumeric =
-    numericCols.find((c) => /revenue|sales|amount|total|price|cost/i.test(c.name)) ||
+    numericCols.find((c) => /revenue|sales|amount|total|price|cost|mrr|val/i.test(c.name)) ||
     numericCols[0];
 
   // 1. Time Series Chart (Date + Numeric)
@@ -236,6 +236,50 @@ export function buildChartRecommendations(schema: DatasetSchema): ChartRecommend
         data: sampleScatter,
       });
     }
+  }
+
+  // 5. Frequency Count Fallback (for non-numeric / survey / directory datasets)
+  if (!primaryNumeric && categoryCols.length > 0) {
+    const catCol = categoryCols[0].name;
+    const freqMap = new Map<string, number>();
+    for (const r of rows) {
+      const val = String(r[catCol] ?? 'Other').trim() || 'Other';
+      freqMap.set(val, (freqMap.get(val) || 0) + 1);
+    }
+    const freqData = Array.from(freqMap.entries())
+      .map(([cat, count]) => ({ [catCol]: cat, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10);
+
+    if (freqData.length > 0) {
+      recommendations.push({
+        id: 'chart-category-count',
+        type: 'bar',
+        title: `Records by ${catCol}`,
+        description: `Frequency distribution across ${catCol} segments.`,
+        xAxis: catCol,
+        yAxis: 'count',
+        data: freqData,
+      });
+    }
+  }
+
+  // 6. Sequential Index Fallback (for purely numeric datasets without categories or dates)
+  if (categoryCols.length === 0 && dateCols.length === 0 && primaryNumeric) {
+    const numCol = primaryNumeric.name;
+    const indexedData = rows.slice(0, 40).map((r, i) => ({
+      index: `#${i + 1}`,
+      [numCol]: Number(r[numCol]) || 0,
+    }));
+    recommendations.push({
+      id: 'chart-numeric-sequence',
+      type: 'area',
+      title: `${numCol} across Records`,
+      description: `Sequential progression of ${numCol} across data rows.`,
+      xAxis: 'index',
+      yAxis: numCol,
+      data: indexedData,
+    });
   }
 
   return recommendations;

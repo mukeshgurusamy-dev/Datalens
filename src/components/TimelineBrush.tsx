@@ -13,7 +13,7 @@
  * ─ Memoized callbacks preventing unnecessary child re-renders
  */
 
-import React, { useRef, useCallback, useMemo, useEffect } from 'react';
+import React, { useRef, useCallback, useMemo } from 'react';
 import { Calendar, ZoomIn } from 'lucide-react';
 import { useTimelineBrush } from '../hooks/useTimelineBrush';
 import type { DatasetSchema } from '../types/dataset';
@@ -23,7 +23,7 @@ import type { DatasetSchema } from '../types/dataset';
 interface TimelineBrushProps {
   dataset: DatasetSchema;
   dateColumnName?: string;
-  onRangeChange?: (startDate: string, endDate: string, filteredIndices: number[]) => void;
+  onRangeChange?: (startDate: string, endDate: string, filteredIndices?: number[]) => void;
 }
 
 // ── Component ──────────────────────────────────────────────────────────
@@ -35,22 +35,6 @@ export const TimelineBrush: React.FC<TimelineBrushProps> = ({
 }) => {
   const brush = useTimelineBrush(dataset.rows, dateColumnName);
   const trackRef = useRef<HTMLDivElement>(null);
-  const isFirstRender = useRef(true);
-
-  // Synchronize date range changes with parent filter state
-  useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
-      return;
-    }
-    if (onRangeChange && brush.startDate && brush.endDate) {
-      onRangeChange(
-        brush.activePreset === 'all' ? '' : brush.startDate,
-        brush.activePreset === 'all' ? '' : brush.endDate,
-        brush.filteredIndices
-      );
-    }
-  }, [brush.range, brush.activePreset, brush.startDate, brush.endDate, brush.filteredIndices, onRangeChange]);
 
   // Build sparkline data: aggregate numeric values by date
   const sparkline = useMemo(() => {
@@ -125,12 +109,34 @@ export const TimelineBrush: React.FC<TimelineBrushProps> = ({
   );
 
   const handlePointerUp = useCallback(() => {
+    if (!brush.dragRef.current.isDragging) return;
     brush.dragRef.current.isDragging = false;
     brush.dragRef.current.handle = null;
     if (onRangeChange) {
-      onRangeChange(brush.startDate, brush.endDate, brush.filteredIndices);
+      onRangeChange(brush.startDate, brush.endDate);
     }
-  }, [brush, onRangeChange]);
+  }, [brush.startDate, brush.endDate, onRangeChange]);
+
+  const handlePresetClick = (presetId: string) => {
+    brush.applyPreset(presetId);
+    if (!onRangeChange) return;
+
+    if (presetId === 'all') {
+      onRangeChange('', '');
+    } else {
+      const totalLen = brush.dateLabels.length;
+      if (totalLen === 0) return;
+      const latestDateStr = brush.dateLabels[totalLen - 1];
+      const preset = brush.presets.find((p) => p.id === presetId);
+      if (preset && typeof preset.days === 'number') {
+        const latestDate = new Date(latestDateStr);
+        const cutoff = new Date(latestDate);
+        cutoff.setDate(cutoff.getDate() - preset.days);
+        const cutoffStr = cutoff.toISOString().split('T')[0];
+        onRangeChange(cutoffStr, latestDateStr);
+      }
+    }
+  };
 
   if (!dateColumnName || brush.dateLabels.length < 2) return null;
 
@@ -162,7 +168,7 @@ export const TimelineBrush: React.FC<TimelineBrushProps> = ({
           {brush.presets.map((preset) => (
             <button
               key={preset.id}
-              onClick={() => brush.applyPreset(preset.id)}
+              onClick={() => handlePresetClick(preset.id)}
               className={`text-[10px] px-2 py-0.5 rounded-md font-mono font-semibold transition-colors ${
                 brush.activePreset === preset.id
                   ? 'bg-indigo-600 text-white'
