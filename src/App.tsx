@@ -13,6 +13,7 @@ import { PerformanceHud } from './components/PerformanceHud';
 import { TimeTravelDrawer } from './components/TimeTravelDrawer';
 import { CardErrorBoundary } from './components/CardErrorBoundary';
 import { SqlStudioModal } from './components/SqlStudioModal';
+import { ScenarioSimulator } from './components/ScenarioSimulator';
 import { buildChartRecommendations, aggregateChartData } from './engine/recommender';
 import { filterRows } from './engine/filter';
 import { deriveFilteredSchema } from './engine/profiler';
@@ -360,9 +361,16 @@ export function App() {
 
             {/* Raw Records Table with 60 FPS Virtual Grid & Pagination */}
             {activeDataset && (
-              <CardErrorBoundary fallbackTitle="Data Grid Anomaly">
-                <DataTable dataset={activeDataset} />
-              </CardErrorBoundary>
+              <>
+                {/* Executive What-If Sensitivity Simulator */}
+                <CardErrorBoundary fallbackTitle="Scenario Simulator Anomaly">
+                  <ScenarioSimulator dataset={activeDataset} />
+                </CardErrorBoundary>
+
+                <CardErrorBoundary fallbackTitle="Data Grid Anomaly">
+                  <DataTable dataset={activeDataset} />
+                </CardErrorBoundary>
+              </>
             )}
 
             {/* Chart Customizer Slide-Over */}
