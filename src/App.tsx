@@ -15,6 +15,7 @@ import { CardErrorBoundary } from './components/CardErrorBoundary';
 import { SqlStudioModal } from './components/SqlStudioModal';
 import { ScenarioSimulator } from './components/ScenarioSimulator';
 import { FormulaStudioModal } from './components/FormulaStudioModal';
+import { TimelineBrush } from './components/TimelineBrush';
 import { buildChartRecommendations, aggregateChartData } from './engine/recommender';
 import { filterRows } from './engine/filter';
 import { deriveFilteredSchema } from './engine/profiler';
@@ -363,6 +364,18 @@ export function App() {
                 filteredRowCount={filteredRows.length}
               />
             </div>
+
+            {/* Interactive Timeline Brush & Drag-Zoom (for date-indexed datasets) */}
+            {dateColumnName && (
+              <div data-export-ignore="true">
+                <CardErrorBoundary fallbackTitle="Timeline Brush Anomaly">
+                  <TimelineBrush
+                    dataset={dataset}
+                    dateColumnName={dateColumnName}
+                  />
+                </CardErrorBoundary>
+              </div>
+            )}
 
             {/* Printable & Exportable Canvas Container wrapped in targeted Profiler */}
             <Profiler id="DataLensCanvas" onRender={handleProfilerRender}>
