@@ -28,9 +28,23 @@ let state: TelemetryState = {
 };
 
 const listeners = new Set<() => void>();
+let notifyPending = false;
 
-function notify() {
-  listeners.forEach((listener) => listener());
+function scheduleNotify() {
+  if (notifyPending) return;
+  notifyPending = true;
+  // Schedule notification outside the synchronous commit phase to prevent render collisions
+  if (typeof queueMicrotask === 'function') {
+    queueMicrotask(() => {
+      notifyPending = false;
+      listeners.forEach((listener) => listener());
+    });
+  } else {
+    setTimeout(() => {
+      notifyPending = false;
+      listeners.forEach((listener) => listener());
+    }, 0);
+  }
 }
 
 export const telemetryStore = {
@@ -47,7 +61,7 @@ export const telemetryStore = {
       avgDurationMs: Math.round(avg * 100) / 100,
       maxDurationMs: Math.round(max * 100) / 100,
     };
-    notify();
+    scheduleNotify();
   },
 
   getSnapshot(): TelemetryState {
@@ -67,7 +81,7 @@ export const telemetryStore = {
       avgDurationMs: 0,
       maxDurationMs: 0,
     };
-    notify();
+    scheduleNotify();
   },
 };
 
