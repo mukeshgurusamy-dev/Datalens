@@ -14,6 +14,7 @@ import { TimeTravelDrawer } from './components/TimeTravelDrawer';
 import { CardErrorBoundary } from './components/CardErrorBoundary';
 import { SqlStudioModal } from './components/SqlStudioModal';
 import { ScenarioSimulator } from './components/ScenarioSimulator';
+import { FormulaStudioModal } from './components/FormulaStudioModal';
 import { buildChartRecommendations, aggregateChartData } from './engine/recommender';
 import { filterRows } from './engine/filter';
 import { deriveFilteredSchema } from './engine/profiler';
@@ -32,6 +33,7 @@ export function App() {
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isTelemetryOpen, setIsTelemetryOpen] = useState(false);
   const [isSqlStudioOpen, setIsSqlStudioOpen] = useState(false);
+  const [isFormulaStudioOpen, setIsFormulaStudioOpen] = useState(false);
   const [persona, setPersona] = useState<ExecutiveLens>('cfo');
 
   // React 19 Concurrent Transition hook for non-blocking UI rendering
@@ -237,6 +239,35 @@ export function App() {
     });
   };
 
+  // Formula Studio: dynamically append a calculated column to the live dataset
+  const handleAddFormulaColumn = (columnName: string, values: (number | string)[]) => {
+    if (!dataset) return;
+    const isNumeric = values.every((v) => typeof v === 'number');
+    const numericValues = isNumeric ? values.map(Number) : [];
+    const newColumn: import('./types/dataset').ColumnProfile = {
+      name: columnName,
+      type: isNumeric ? 'number' : 'text',
+      nullableCount: 0,
+      uniqueCount: new Set(values.map(String)).size,
+      ...(isNumeric && numericValues.length > 0 ? {
+        min: Math.min(...numericValues),
+        max: Math.max(...numericValues),
+        mean: numericValues.reduce((s, v) => s + v, 0) / numericValues.length,
+        sum: numericValues.reduce((s, v) => s + v, 0),
+      } : {}),
+    };
+    const newRows = dataset.rows.map((row, i) => ({
+      ...row,
+      [columnName]: values[i] ?? null,
+    }));
+    setDataset({
+      ...dataset,
+      columns: [...dataset.columns, newColumn],
+      columnCount: dataset.columnCount + 1,
+      rows: newRows,
+    });
+  };
+
   const handleReset = () => {
     setDataset(null);
     setCustomCharts({});
@@ -281,6 +312,7 @@ export function App() {
         isTelemetryOpen={isTelemetryOpen}
         onToggleTelemetry={() => setIsTelemetryOpen(!isTelemetryOpen)}
         onOpenSqlStudio={() => setIsSqlStudioOpen(true)}
+        onOpenFormulaStudio={() => setIsFormulaStudioOpen(true)}
       />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-8">
@@ -403,6 +435,14 @@ export function App() {
               onClose={() => setIsSqlStudioOpen(false)}
               dataset={activeDataset || dataset}
               onAddChartToDashboard={handleAddCustomChart}
+            />
+
+            {/* Custom Formula Studio — Calculated Columns */}
+            <FormulaStudioModal
+              isOpen={isFormulaStudioOpen}
+              onClose={() => setIsFormulaStudioOpen(false)}
+              dataset={activeDataset || dataset}
+              onAddColumn={handleAddFormulaColumn}
             />
 
             {/* Interactive Time-Travel History Drawer & Undo/Redo Engine */}

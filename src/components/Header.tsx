@@ -1,5 +1,5 @@
 import React from 'react';
-import { BarChart3, RefreshCw, Database, Download, Share2, Activity, Terminal } from 'lucide-react';
+import { BarChart3, RefreshCw, Database, Download, Share2, Activity, Terminal, Calculator } from 'lucide-react';
 import type { DatasetSchema } from '../types/dataset';
 import type { ExecutiveLens } from '../engine/personas';
 
@@ -13,6 +13,7 @@ interface HeaderProps {
   isTelemetryOpen?: boolean;
   onToggleTelemetry?: () => void;
   onOpenSqlStudio?: () => void;
+  onOpenFormulaStudio?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -25,6 +26,7 @@ export const Header: React.FC<HeaderProps> = ({
   isTelemetryOpen = false,
   onToggleTelemetry,
   onOpenSqlStudio,
+  onOpenFormulaStudio,
 }) => {
   return (
     <header className="w-full border-b border-zinc-800/80 bg-[#0c0c0e]/80 backdrop-blur-md sticky top-0 z-30">
@@ -90,6 +92,18 @@ export const Header: React.FC<HeaderProps> = ({
               >
                 <Terminal className="w-3.5 h-3.5 text-purple-400" />
                 <span className="hidden sm:inline">SQL Studio</span>
+              </button>
+            )}
+
+            {/* Formula Studio Trigger */}
+            {onOpenFormulaStudio && (
+              <button
+                onClick={onOpenFormulaStudio}
+                title="Open Formula Studio — Build Calculated Columns"
+                className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-zinc-800 bg-zinc-900 hover:bg-zinc-850 text-zinc-300 hover:text-white transition-all shadow-xs"
+              >
+                <Calculator className="w-3.5 h-3.5 text-cyan-400" />
+                <span className="hidden sm:inline">Formulas</span>
               </button>
             )}
 
