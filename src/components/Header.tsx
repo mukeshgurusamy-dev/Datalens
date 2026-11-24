@@ -1,5 +1,5 @@
 import React from 'react';
-import { BarChart3, RefreshCw, Database, Download, Share2, Activity } from 'lucide-react';
+import { BarChart3, RefreshCw, Database, Download, Share2, Activity, Terminal } from 'lucide-react';
 import type { DatasetSchema } from '../types/dataset';
 import type { ExecutiveLens } from '../engine/personas';
 
@@ -12,6 +12,7 @@ interface HeaderProps {
   onPersonaChange?: (persona: ExecutiveLens) => void;
   isTelemetryOpen?: boolean;
   onToggleTelemetry?: () => void;
+  onOpenSqlStudio?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -23,6 +24,7 @@ export const Header: React.FC<HeaderProps> = ({
   onPersonaChange,
   isTelemetryOpen = false,
   onToggleTelemetry,
+  onOpenSqlStudio,
 }) => {
   return (
     <header className="w-full border-b border-zinc-800/80 bg-[#0c0c0e]/80 backdrop-blur-md sticky top-0 z-30">
@@ -77,6 +79,18 @@ export const Header: React.FC<HeaderProps> = ({
                   </button>
                 ))}
               </div>
+            )}
+
+            {/* In-Memory SQL Studio Trigger */}
+            {onOpenSqlStudio && (
+              <button
+                onClick={onOpenSqlStudio}
+                title="Open In-Memory SQL Query Studio"
+                className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-zinc-800 bg-zinc-900 hover:bg-zinc-850 text-zinc-300 hover:text-white transition-all shadow-xs"
+              >
+                <Terminal className="w-3.5 h-3.5 text-purple-400" />
+                <span className="hidden sm:inline">SQL Studio</span>
+              </button>
             )}
 
             {/* React 19 Telemetry HUD Trigger */}

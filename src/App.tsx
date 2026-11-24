@@ -12,6 +12,7 @@ import { AiBriefing } from './components/AiBriefing';
 import { PerformanceHud } from './components/PerformanceHud';
 import { TimeTravelDrawer } from './components/TimeTravelDrawer';
 import { CardErrorBoundary } from './components/CardErrorBoundary';
+import { SqlStudioModal } from './components/SqlStudioModal';
 import { buildChartRecommendations, aggregateChartData } from './engine/recommender';
 import { filterRows } from './engine/filter';
 import { deriveFilteredSchema } from './engine/profiler';
@@ -29,6 +30,7 @@ export function App() {
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isTelemetryOpen, setIsTelemetryOpen] = useState(false);
+  const [isSqlStudioOpen, setIsSqlStudioOpen] = useState(false);
   const [persona, setPersona] = useState<ExecutiveLens>('cfo');
 
   // React 19 Concurrent Transition hook for non-blocking UI rendering
@@ -156,7 +158,7 @@ export function App() {
   const charts = useMemo(() => {
     if (!activeDataset) return [];
     const base = buildChartRecommendations(activeDataset);
-    return base.map((c) => {
+    const mapped = base.map((c) => {
       const custom = customCharts[c.id];
       if (!custom) return c;
 
@@ -183,6 +185,10 @@ export function App() {
         data,
       };
     });
+
+    // Include dynamically created charts (e.g. from SQL Studio)
+    const extraCustomCharts = Object.values(customCharts).filter((c) => !base.some((b) => b.id === c.id));
+    return [...mapped, ...extraCustomCharts];
   }, [activeDataset, customCharts]);
 
   const activeEditingChart = useMemo(() => {
@@ -203,6 +209,21 @@ export function App() {
     startTransition(() => {
       setCustomCharts(updatedCharts);
       setEditingChart(updated);
+    });
+  };
+
+  const handleAddCustomChart = (newChart: ChartRecommendation) => {
+    const updatedCharts = {
+      ...customCharts,
+      [newChart.id]: newChart,
+    };
+    historyStore.push(`Added SQL Chart: ${newChart.title}`, {
+      filters,
+      customCharts: updatedCharts,
+      persona,
+    });
+    startTransition(() => {
+      setCustomCharts(updatedCharts);
     });
   };
 
@@ -258,6 +279,7 @@ export function App() {
         onPersonaChange={handlePersonaChange}
         isTelemetryOpen={isTelemetryOpen}
         onToggleTelemetry={() => setIsTelemetryOpen(!isTelemetryOpen)}
+        onOpenSqlStudio={() => setIsSqlStudioOpen(true)}
       />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-8">
@@ -365,6 +387,14 @@ export function App() {
               dataset={dataset}
               filters={filters}
               customCharts={customCharts}
+            />
+
+            {/* In-Memory SQL Query Studio */}
+            <SqlStudioModal
+              isOpen={isSqlStudioOpen}
+              onClose={() => setIsSqlStudioOpen(false)}
+              dataset={activeDataset || dataset}
+              onAddChartToDashboard={handleAddCustomChart}
             />
 
             {/* Interactive Time-Travel History Drawer & Undo/Redo Engine */}
