@@ -16,6 +16,7 @@ import { SqlStudioModal } from './components/SqlStudioModal';
 import { ScenarioSimulator } from './components/ScenarioSimulator';
 import { FormulaStudioModal } from './components/FormulaStudioModal';
 import { TimelineBrush } from './components/TimelineBrush';
+import { CorrelationMatrix } from './components/CorrelationMatrix';
 import { buildChartRecommendations, aggregateChartData } from './engine/recommender';
 import { filterRows } from './engine/filter';
 import { deriveFilteredSchema } from './engine/profiler';
@@ -410,6 +411,11 @@ export function App() {
                 {/* Executive What-If Sensitivity Simulator */}
                 <CardErrorBoundary fallbackTitle="Scenario Simulator Anomaly">
                   <ScenarioSimulator dataset={activeDataset} />
+                </CardErrorBoundary>
+
+                {/* Background Web Worker Statistical Correlation Matrix */}
+                <CardErrorBoundary fallbackTitle="Correlation Matrix Anomaly">
+                  <CorrelationMatrix dataset={activeDataset} />
                 </CardErrorBoundary>
 
                 <CardErrorBoundary fallbackTitle="Data Grid Anomaly">

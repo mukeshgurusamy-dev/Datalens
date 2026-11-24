@@ -33,7 +33,7 @@ export const TimelineBrush: React.FC<TimelineBrushProps> = ({
   dateColumnName,
   onRangeChange,
 }) => {
-  const brush = useTimelineBrush(dataset.rows, dateColumnName, dataset.rows);
+  const brush = useTimelineBrush(dataset.rows, dateColumnName);
   const trackRef = useRef<HTMLDivElement>(null);
 
   // Build sparkline data: aggregate numeric values by date

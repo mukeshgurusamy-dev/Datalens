@@ -77,9 +77,8 @@ const DEFAULT_PRESETS: TimelinePreset[] = [
 // ── Hook ───────────────────────────────────────────────────────────────
 
 export function useTimelineBrush(
-  dates: string[],
-  dateColumnName: string | undefined,
-  rows: Record<string, any>[]
+  rows: Record<string, any>[],
+  dateColumnName: string | undefined
 ): TimelineBrushState {
   // Extract and sort unique dates
   const dateLabels = useMemo(() => {
