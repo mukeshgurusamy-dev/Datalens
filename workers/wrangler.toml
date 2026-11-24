@@ -1,0 +1,11 @@
+name = "datalens-edge-ai"
+main = "src/index.ts"
+compatibility_date = "2026-01-01"
+
+[ai]
+binding = "AI"
+
+# Optional R2 bucket for zero-egress report backups
+# [[r2_buckets]]
+# binding = "REPORTS_BUCKET"
+# bucket_name = "datalens-reports"

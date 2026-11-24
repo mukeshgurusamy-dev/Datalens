@@ -1,0 +1,319 @@
+import React, { useState, useMemo } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import { Sparkles, TrendingUp, AlertTriangle, PieChart, ShieldCheck, CornerDownLeft, Bot, GitBranch } from 'lucide-react';
+import type { DatasetSchema } from '../types/dataset';
+import { generateExecutiveInsights, type ExecutiveInsight } from '../engine/ai-insights';
+import { answerNaturalLanguageQuery, type QueryResult } from '../engine/nl-query';
+import { diagnoseRootCause } from '../engine/root-cause';
+
+interface AiBriefingProps {
+  schema: DatasetSchema;
+}
+
+export const AiBriefing: React.FC<AiBriefingProps> = ({ schema }) => {
+  const [question, setQuestion] = useState('');
+  const [queryResult, setQueryResult] = useState<QueryResult | null>(null);
+  const [isAsking, setIsAsking] = useState(false);
+  const [showDiagnosis, setShowDiagnosis] = useState(false);
+
+  // Derive executive insights reactively whenever active filtered schema changes
+  const insights = useMemo(() => {
+    return generateExecutiveInsights(schema);
+  }, [schema]);
+
+  // Derive causal root-cause diagnosis for anomalies (e.g. status='declined')
+  const diagnosis = useMemo(() => {
+    return diagnoseRootCause(schema, 'status', 'declined');
+  }, [schema]);
+
+  // Generate dynamic suggested questions based on actual dataset categories
+  const suggestedQuestions = useMemo(() => {
+    const list: string[] = [];
+    const catCols = schema.columns.filter((c) => c.type === 'category');
+    const numCols = schema.columns.filter((c) => c.type === 'number');
+
+    const primaryCategory = catCols[0];
+    const statusCol = catCols.find((c) => /status|state|outcome/i.test(c.name));
+    const primaryNum = numCols[0];
+
+    if (primaryCategory && primaryCategory.topValues?.[0]) {
+      list.push(`Total ${primaryNum?.name || 'amount'} for ${primaryCategory.topValues[0].value}`);
+    }
+    if (statusCol && statusCol.topValues) {
+      const risk = statusCol.topValues.find((v) => /declined|refunded|failed/i.test(v.value)) || statusCol.topValues[1];
+      if (risk) {
+        list.push(`What percentage is ${risk.value}?`);
+      }
+    }
+    if (primaryCategory) {
+      list.push(`Which ${primaryCategory.name} has the highest ${primaryNum?.name || 'volume'}?`);
+    }
+
+    return list.slice(0, 3);
+  }, [schema]);
+
+  const handleAsk = (queryText: string) => {
+    const q = queryText.trim();
+    if (!q) return;
+    setIsAsking(true);
+    setQuestion(q);
+
+    // Compute deterministic local query
+    setTimeout(() => {
+      const result = answerNaturalLanguageQuery(q, schema);
+      setQueryResult(result);
+      setIsAsking(false);
+    }, 80);
+  };
+
+  const getImpactBadge = (insight: ExecutiveInsight) => {
+    switch (insight.impact) {
+      case 'high-priority':
+        return 'bg-rose-500/10 border-rose-500/20 text-rose-400';
+      case 'warning':
+        return 'bg-amber-500/10 border-amber-500/20 text-amber-400';
+      case 'positive':
+        return 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400';
+      default:
+        return 'bg-blue-500/10 border-blue-500/20 text-blue-400';
+    }
+  };
+
+  const getInsightIcon = (type: ExecutiveInsight['type']) => {
+    switch (type) {
+      case 'driver':
+        return <PieChart className="w-4 h-4 text-blue-400 shrink-0" />;
+      case 'distribution':
+        return <TrendingUp className="w-4 h-4 text-purple-400 shrink-0" />;
+      case 'trend':
+        return <Sparkles className="w-4 h-4 text-emerald-400 shrink-0" />;
+      case 'risk':
+        return <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />;
+    }
+  };
+
+  return (
+    <div className="w-full bg-[#121215] border border-zinc-800/80 rounded-2xl p-5 mb-8 shadow-sm">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-4 mb-4 border-b border-zinc-850">
+        <div className="flex items-center gap-2.5">
+          <div className="w-7 h-7 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center">
+            <Bot className="w-4 h-4 text-blue-400" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="text-sm font-semibold text-white tracking-tight">
+                Executive AI Briefing
+              </h2>
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 font-mono">
+                Dual-Brain Engine
+              </span>
+            </div>
+            <p className="text-[11px] text-zinc-400 mt-0.5">
+              Automated synthesis & deterministic risk alerts across {schema.rowCount.toLocaleString()} active records.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          {diagnosis && (
+            <button
+              onClick={() => setShowDiagnosis(!showDiagnosis)}
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors ${
+                showDiagnosis
+                  ? 'bg-amber-500/10 border-amber-500/30 text-amber-300'
+                  : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700'
+              }`}
+            >
+              <GitBranch className="w-3.5 h-3.5 text-amber-400" />
+              <span>{showDiagnosis ? 'Hide Root Cause' : 'Diagnose Root Cause'}</span>
+            </button>
+          )}
+
+          <div className="flex items-center gap-1.5 text-[11px] text-zinc-400 pl-2 border-l border-zinc-800">
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+            <span>0ms Engine</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Root-Cause Anomaly Diagnostic Panel */}
+      <AnimatePresence>
+        {showDiagnosis && diagnosis && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="mb-6 p-4 rounded-xl bg-amber-500/5 border border-amber-500/20 overflow-hidden"
+          >
+            <div className="flex items-center justify-between gap-2 mb-2 pb-2 border-b border-amber-500/10">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-amber-400" />
+                <span className="text-xs font-semibold text-white">
+                  Causal Attribution Diagnosis ({diagnosis.targetCondition})
+                </span>
+              </div>
+              <span className="text-[10px] font-mono text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded">
+                Entropy Decomposition
+              </span>
+            </div>
+
+            <p className="text-xs text-zinc-300 mb-3 leading-relaxed">
+              {diagnosis.executiveSummary}
+            </p>
+
+            {diagnosis.primaryDrivers.length > 0 && (
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                {diagnosis.primaryDrivers.map((driver, i) => (
+                  <div
+                    key={i}
+                    className="p-2.5 rounded-lg bg-zinc-900/80 border border-zinc-800 flex flex-col justify-between"
+                  >
+                    <div>
+                      <div className="flex items-center justify-between text-[11px] mb-1">
+                        <span className="text-zinc-400 font-medium">{driver.columnName}:</span>
+                        <span className="text-amber-400 font-mono font-semibold">{driver.percentageOfTarget}% Impact</span>
+                      </div>
+                      <div className="text-xs font-bold text-white mb-1.5 truncate">
+                        {driver.value}
+                      </div>
+                    </div>
+                    <p className="text-[10px] text-zinc-500 line-clamp-2">
+                      {driver.explanation}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* 4-Bento Insight Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+        {insights.map((insight, idx) => (
+          <motion.div
+            key={insight.id}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ type: 'spring', stiffness: 350, damping: 25, delay: idx * 0.05 }}
+            className="p-3.5 rounded-xl bg-zinc-900/60 border border-zinc-800/70 hover:border-zinc-700/80 transition-all flex flex-col justify-between"
+          >
+            <div>
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <div className="flex items-center gap-1.5">
+                  {getInsightIcon(insight.type)}
+                  <span className="text-[11px] font-semibold text-zinc-300 truncate max-w-[140px]">
+                    {insight.title}
+                  </span>
+                </div>
+                {insight.metric && (
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded font-mono border ${getImpactBadge(insight)}`}>
+                    {insight.metric}
+                  </span>
+                )}
+              </div>
+              <p className="text-[11px] text-zinc-400 leading-relaxed">
+                {insight.description}
+              </p>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Natural Language Query Bar */}
+      <div className="pt-3 border-t border-zinc-850">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleAsk(question);
+          }}
+          className="relative flex items-center"
+        >
+          <Sparkles className="w-4 h-4 text-blue-400 absolute left-3.5 pointer-events-none" />
+          <input
+            type="text"
+            placeholder="Ask anything about the dataset (e.g. 'What percentage was declined?', 'Total amount for Amazon')..."
+            value={question}
+            onChange={(e) => setQuestion(e.target.value)}
+            className="w-full bg-[#18181b] border border-zinc-800 focus:border-blue-500 rounded-xl pl-10 pr-24 py-2.5 text-xs text-zinc-200 placeholder-zinc-500 transition-colors focus:outline-none shadow-inner"
+          />
+          <button
+            type="submit"
+            disabled={!question.trim() || isAsking}
+            className="absolute right-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 disabled:opacity-40 text-white text-xs font-medium flex items-center gap-1 transition-all"
+          >
+            <span>Ask</span>
+            <CornerDownLeft className="w-3 h-3" />
+          </button>
+        </form>
+
+        {/* Suggested Chips */}
+        {suggestedQuestions.length > 0 && !queryResult && (
+          <div className="flex flex-wrap items-center gap-2 mt-2.5">
+            <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-semibold">
+              Try asking:
+            </span>
+            {suggestedQuestions.map((q) => (
+              <button
+                key={q}
+                type="button"
+                onClick={() => handleAsk(q)}
+                className="text-[11px] px-2.5 py-1 rounded-md bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white hover:border-zinc-700 transition-colors"
+              >
+                {q}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Query Result Card */}
+        <AnimatePresence>
+          {queryResult && (
+            <motion.div
+              initial={{ opacity: 0, y: 8, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -8 }}
+              className="mt-3 p-4 rounded-xl bg-blue-950/20 border border-blue-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+            >
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-[10px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-300">
+                    Deterministic Calculation
+                  </span>
+                  <span className="text-xs text-zinc-400 font-medium italic">
+                    "{question}"
+                  </span>
+                </div>
+                <p className="text-xs text-zinc-200 font-medium">
+                  {queryResult.answer}
+                </p>
+
+                {queryResult.supportingData && queryResult.supportingData.length > 0 && (
+                  <div className="flex flex-wrap items-center gap-3 mt-2 pt-2 border-t border-blue-500/10">
+                    {queryResult.supportingData.map((d, i) => (
+                      <span key={i} className="text-[10px] text-zinc-400">
+                        {d.label}: <strong className="text-zinc-200 font-mono">{d.value}</strong>
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {queryResult.metricValue && (
+                <div className="shrink-0 text-right">
+                  <div className="text-[10px] uppercase font-mono text-zinc-400">
+                    {queryResult.metricLabel || 'Calculated Metric'}
+                  </div>
+                  <div className="text-xl font-bold font-mono text-blue-400">
+                    {queryResult.metricValue}
+                  </div>
+                </div>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </div>
+  );
+};
