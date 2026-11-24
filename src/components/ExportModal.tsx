@@ -17,7 +17,7 @@
  * ─ Non-blocking async feedback loops with real-time status spinners and toasts
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   X,
@@ -70,6 +70,13 @@ export const ExportModal: React.FC<ExportModalProps> = ({
     ...DEFAULT_REPORT_CUSTOMIZATION,
     title: `${dataset.name} — Executive Briefing`,
   });
+
+  useEffect(() => {
+    setPdfConfig((prev) => ({
+      ...prev,
+      title: `${dataset.name} — Executive Briefing`,
+    }));
+  }, [dataset.name]);
 
   if (!isOpen) return null;
 

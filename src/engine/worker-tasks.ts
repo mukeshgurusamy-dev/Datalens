@@ -83,8 +83,13 @@ export function computeCorrelationMatrix(
 
   for (const row of rows) {
     for (const col of numericColumns) {
-      const val = Number(row[col]);
-      vectors[col].push(!isNaN(val) && row[col] !== null && row[col] !== '' ? val : 0);
+      const raw = row[col];
+      let val = typeof raw === 'number' ? raw : NaN;
+      if (typeof raw === 'string') {
+        const cleaned = raw.replace(/[$€£₹,]/g, '').replace(/%$/, '').trim();
+        val = Number(cleaned);
+      }
+      vectors[col].push(!isNaN(val) && Number.isFinite(val) ? val : 0);
     }
   }
 

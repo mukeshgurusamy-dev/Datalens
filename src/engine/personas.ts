@@ -1,5 +1,5 @@
 import type { DatasetSchema, KpiCard } from '../types/dataset';
-import { formatMetric } from './profiler';
+import { formatMetric, parseNumberValue } from './profiler';
 import { detectOutliers } from './outliers';
 
 export type ExecutiveLens = 'cfo' | 'coo' | 'cmo';
@@ -88,7 +88,11 @@ export function buildPersonaKpiCards(
       const declinedRows = rows.filter((r) =>
         /declined|failed|refunded/i.test(String(r[statusCol.name] ?? ''))
       );
-      const lostSum = declinedRows.reduce((acc, r) => acc + (Number(r[primaryNumeric.name]) || 0), 0);
+      const lostSum = declinedRows.reduce((acc, r) => {
+        const raw = r[primaryNumeric.name];
+        const val = typeof raw === 'number' ? raw : (parseNumberValue(raw) ?? 0);
+        return acc + (!isNaN(val) && Number.isFinite(val) ? val : 0);
+      }, 0);
       cards.push({
         id: 'cfo-loss',
         title: 'Declined Exposure',
@@ -191,7 +195,7 @@ export function buildPersonaKpiCards(
         id: 'cmo-partners',
         title: 'Partner Diversity',
         value: `${merchantCol.uniqueCount} Merchants`,
-        subtitle: `${((merchantCol.uniqueCount / totalRows) * 100).toFixed(1)}% concentration spread`,
+        subtitle: totalRows > 0 ? `${((merchantCol.uniqueCount / totalRows) * 100).toFixed(1)}% concentration spread` : '100% concentration spread',
       });
     }
 

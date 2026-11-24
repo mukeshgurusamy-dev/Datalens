@@ -11,6 +11,14 @@ export function normalizeDateKey(val: unknown): string | null {
   if (val instanceof Date && !isNaN(val.getTime())) {
     return val.toISOString().slice(0, 10);
   }
+  if (typeof val === 'number' && Number.isFinite(val)) {
+    const ms = val > 1e11 ? val : val * 1000;
+    const d = new Date(ms);
+    if (!isNaN(d.getTime()) && d.getFullYear() >= 1980 && d.getFullYear() <= 2100) {
+      return d.toISOString().slice(0, 10);
+    }
+    return null;
+  }
   if (typeof val === 'string') {
     const trimmed = val.trim();
     if (trimmed.length >= 10 && /^\d{4}[-/.]\d{2}[-/.]\d{2}/.test(trimmed)) {
@@ -18,10 +26,13 @@ export function normalizeDateKey(val: unknown): string | null {
     }
     const timestamp = Date.parse(trimmed);
     if (!isNaN(timestamp)) {
-      return new Date(timestamp).toISOString().slice(0, 10);
+      const d = new Date(timestamp);
+      if (!isNaN(d.getTime())) {
+        return d.toISOString().slice(0, 10);
+      }
     }
   }
-  return String(val).slice(0, 10);
+  return null;
 }
 
 /**
@@ -41,20 +52,59 @@ function isDateValue(val: unknown): boolean {
 
 /**
  * Cleans and converts a raw cell into a number if possible.
- * Handles currencies ($1,200, ₹45,000), percentages (45.2%), and commas.
+ * Handles currencies ($1,200, ₹45,000), percentages (45.2%), commas, and accounting (brackets).
  */
 export function parseNumberValue(val: unknown): number | null {
-  if (typeof val === 'number') return isNaN(val) ? null : val;
+  if (typeof val === 'number') return isNaN(val) || !Number.isFinite(val) ? null : val;
   if (typeof val !== 'string') return null;
 
   const trimmed = val.trim();
   if (!trimmed) return null;
 
-  // Strip currency symbols and formatting commas
-  const cleaned = trimmed.replace(/[$€£₹,]/g, '').replace(/%$/, '');
+  // Handle accounting format ($1,200.50) -> -1200.50
+  let cleaned = trimmed.replace(/[$€£₹]/g, '').replace(/%$/, '').trim();
+  let isNegative = false;
+  if (cleaned.startsWith('(') && cleaned.endsWith(')')) {
+    isNegative = true;
+    cleaned = cleaned.slice(1, -1).trim();
+  } else if (cleaned.startsWith('-')) {
+    isNegative = true;
+    cleaned = cleaned.slice(1).trim();
+  }
+
+  // Remove commas
+  cleaned = cleaned.replace(/,/g, '');
   const num = Number(cleaned);
 
-  return isNaN(num) ? null : num;
+  if (isNaN(num) || !Number.isFinite(num)) return null;
+  return isNegative ? -num : num;
+}
+
+/**
+ * Computes min, max, sum, and mean in a single pass without call-stack overflow risk.
+ */
+export function computeNumericStats(numericValues: number[]): {
+  min?: number;
+  max?: number;
+  mean?: number;
+  sum?: number;
+} {
+  if (numericValues.length === 0) return {};
+  let min = numericValues[0];
+  let max = numericValues[0];
+  let sum = 0;
+  for (let i = 0; i < numericValues.length; i++) {
+    const v = numericValues[i];
+    if (v < min) min = v;
+    if (v > max) max = v;
+    sum += v;
+  }
+  return {
+    min,
+    max,
+    sum,
+    mean: sum / numericValues.length,
+  };
 }
 
 /**
@@ -156,10 +206,11 @@ export function profileDataset(
     let sum: number | undefined;
 
     if (type === 'number' && numericValues.length > 0) {
-      min = Math.min(...numericValues);
-      max = Math.max(...numericValues);
-      sum = numericValues.reduce((acc, curr) => acc + curr, 0);
-      mean = sum / numericValues.length;
+      const stats = computeNumericStats(numericValues);
+      min = stats.min;
+      max = stats.max;
+      sum = stats.sum;
+      mean = stats.mean;
     }
 
     return {
@@ -253,10 +304,11 @@ export function deriveFilteredSchema(
     let sum: number | undefined;
 
     if (col.type === 'number' && numericValues.length > 0) {
-      min = Math.min(...numericValues);
-      max = Math.max(...numericValues);
-      sum = numericValues.reduce((acc, curr) => acc + curr, 0);
-      mean = sum / numericValues.length;
+      const stats = computeNumericStats(numericValues);
+      min = stats.min;
+      max = stats.max;
+      sum = stats.sum;
+      mean = stats.mean;
     }
 
     return {

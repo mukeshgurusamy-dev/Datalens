@@ -87,11 +87,15 @@ export function lttbDownsample<T extends Record<string, any>>(
 
     // Next point A is the chosen point
     a = maxAreaIndex;
-    sampled.push(data[a]);
+    if (data[a]) {
+      sampled.push(data[a]);
+    }
   }
 
   // Always retain the very last point
-  sampled.push(data[dataLength - 1]);
+  if (data[dataLength - 1]) {
+    sampled.push(data[dataLength - 1]);
+  }
 
   return sampled;
 }

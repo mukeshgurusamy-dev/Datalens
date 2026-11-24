@@ -1,5 +1,5 @@
 import type { DatasetSchema } from '../types/dataset';
-import { formatMetric } from './profiler';
+import { formatMetric, parseNumberValue } from './profiler';
 
 export interface QueryResult {
   answer: string;
@@ -66,7 +66,7 @@ export function answerNaturalLanguageQuery(
       const matchingCount = rows.filter(
         (r) => String(r[matchedCandidate.colName]).trim().toLowerCase() === matchedCandidate.value.toLowerCase()
       ).length;
-      const pct = ((matchingCount / totalRows) * 100).toFixed(1);
+      const pct = totalRows > 0 ? ((matchingCount / totalRows) * 100).toFixed(1) : '0.0';
 
       return {
         answer: `${matchedCandidate.value} accounts for ${pct}% of total records (${matchingCount.toLocaleString()} out of ${totalRows.toLocaleString()}).`,
@@ -100,10 +100,10 @@ export function answerNaturalLanguageQuery(
       if (primaryNumeric) {
         const sum1 = rows
           .filter((r) => String(r[v1.colName]).toLowerCase() === v1.value.toLowerCase())
-          .reduce((acc, r) => acc + (Number(r[primaryNumeric.name]) || 0), 0);
+          .reduce((acc, r) => acc + (parseNumberValue(r[primaryNumeric.name]) ?? 0), 0);
         const sum2 = rows
           .filter((r) => String(r[v2.colName]).toLowerCase() === v2.value.toLowerCase())
-          .reduce((acc, r) => acc + (Number(r[primaryNumeric.name]) || 0), 0);
+          .reduce((acc, r) => acc + (parseNumberValue(r[primaryNumeric.name]) ?? 0), 0);
         extraText = ` (${formatMetric(sum1, isCurrency)} vs ${formatMetric(sum2, isCurrency)})`;
       }
 
@@ -124,7 +124,7 @@ export function answerNaturalLanguageQuery(
         (r) => String(r[matchedCandidate.colName]).trim().toLowerCase() === matchedCandidate.value.toLowerCase()
       );
       const sumVal = matchingRows.reduce(
-        (acc, r) => acc + (Number(r[primaryNumeric.name]) || 0),
+        (acc, r) => acc + (parseNumberValue(r[primaryNumeric.name]) ?? 0),
         0
       );
 
@@ -141,7 +141,7 @@ export function answerNaturalLanguageQuery(
     }
 
     // Grand total query
-    const grandTotal = primaryNumeric.sum ?? rows.reduce((acc, r) => acc + (Number(r[primaryNumeric.name]) || 0), 0);
+    const grandTotal = primaryNumeric.sum ?? rows.reduce((acc, r) => acc + (parseNumberValue(r[primaryNumeric.name]) ?? 0), 0);
     return {
       answer: `Total ${primaryNumeric.name} across all ${totalRows.toLocaleString()} active records is ${formatMetric(grandTotal, isCurrency)}.`,
       metricLabel: `Grand Total ${primaryNumeric.name}`,
@@ -158,7 +158,7 @@ export function answerNaturalLanguageQuery(
         (r) => String(r[matchedCandidate.colName]).trim().toLowerCase() === matchedCandidate.value.toLowerCase()
       );
       const sumVal = matchingRows.reduce(
-        (acc, r) => acc + (Number(r[primaryNumeric.name]) || 0),
+        (acc, r) => acc + (parseNumberValue(r[primaryNumeric.name]) ?? 0),
         0
       );
       const avgVal = matchingRows.length > 0 ? sumVal / matchingRows.length : 0;
@@ -187,7 +187,7 @@ export function answerNaturalLanguageQuery(
       const agg = new Map<string, number>();
       for (const r of rows) {
         const cat = String(r[targetCat.name] ?? 'Other').trim();
-        const val = Number(r[primaryNumeric.name]) || 0;
+        const val = parseNumberValue(r[primaryNumeric.name]) ?? 0;
         agg.set(cat, (agg.get(cat) || 0) + val);
       }
       const sorted = Array.from(agg.entries()).sort((a, b) => b[1] - a[1]);
@@ -216,7 +216,7 @@ export function answerNaturalLanguageQuery(
     ).length;
 
     return {
-      answer: `There are ${matchingCount.toLocaleString()} records matching '${matchedCandidate.value}' in ${matchedCandidate.colName} (${((matchingCount / totalRows) * 100).toFixed(1)}% of volume).`,
+      answer: `There are ${matchingCount.toLocaleString()} records matching '${matchedCandidate.value}' in ${matchedCandidate.colName} (${(totalRows > 0 ? (matchingCount / totalRows) * 100 : 0).toFixed(1)}% of volume).`,
       metricLabel: `${matchedCandidate.value} Count`,
       metricValue: matchingCount.toLocaleString(),
       type: 'calculation',

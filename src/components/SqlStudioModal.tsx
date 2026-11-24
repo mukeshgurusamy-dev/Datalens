@@ -61,8 +61,22 @@ export const SqlStudioModal: React.FC<SqlStudioModalProps> = ({
     setAddedSuccess(false);
   };
 
-  const handleCopySql = () => {
-    navigator.clipboard.writeText(query);
+  const handleCopySql = async () => {
+    try {
+      await navigator.clipboard.writeText(query);
+    } catch {
+      // Fallback: use legacy execCommand approach
+      try {
+        const textarea = document.createElement('textarea');
+        textarea.value = query;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+      } catch { /* ignore */ }
+    }
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };

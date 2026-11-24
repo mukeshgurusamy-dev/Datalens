@@ -68,8 +68,13 @@ self.onmessage = function(e) {
   for (var r = 0; r < rows.length; r++) {
     for (var c = 0; c < numericColumns.length; c++) {
       var col = numericColumns[c];
-      var v = Number(rows[r][col]);
-      vectors[col].push(!isNaN(v) && rows[r][col] !== null && rows[r][col] !== '' ? v : 0);
+      var raw = rows[r][col];
+      var v = typeof raw === 'number' ? raw : NaN;
+      if (typeof raw === 'string') {
+        var cleaned = raw.replace(/[$€£₹,]/g, '').replace(/%$/, '').trim();
+        v = Number(cleaned);
+      }
+      vectors[col].push(!isNaN(v) && isFinite(v) ? v : 0);
     }
   }
 

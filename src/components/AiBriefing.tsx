@@ -21,9 +21,19 @@ export const AiBriefing: React.FC<AiBriefingProps> = ({ schema }) => {
     return generateExecutiveInsights(schema);
   }, [schema]);
 
-  // Derive causal root-cause diagnosis for anomalies (e.g. status='declined')
+  // Derive causal root-cause diagnosis for anomalies — dynamically detect the best target
   const diagnosis = useMemo(() => {
-    return diagnoseRootCause(schema, 'status', 'declined');
+    // Find a status/outcome column with a risk value
+    const statusCol = schema.columns.find(
+      (c) => c.type === 'category' && /status|state|outcome|result/i.test(c.name)
+    );
+    if (!statusCol || !statusCol.topValues || statusCol.topValues.length === 0) return null;
+    // Look for a risk-indicating value (declined, failed, refunded, etc.), fallback to the least common value
+    const riskValue =
+      statusCol.topValues.find((v) => /declined|failed|refunded|rejected|error|cancelled/i.test(v.value)) ||
+      statusCol.topValues[statusCol.topValues.length - 1];
+    if (!riskValue) return null;
+    return diagnoseRootCause(schema, statusCol.name, riskValue.value);
   }, [schema]);
 
   // Generate dynamic suggested questions based on actual dataset categories

@@ -101,12 +101,14 @@ export function reconstructDatasetFromPayload(payload: SharedDashboardPayload): 
 export async function fetchExternalCsv(rawUrl: string, proxyBaseUrl?: string): Promise<Record<string, any>[]> {
   let targetUrl = rawUrl.trim();
 
-  // Handle Google Sheets sharing link: convert to /export?format=csv
+  // Handle Google Sheets sharing link: convert to /export?format=csv, preserving sheet gid if present
   if (targetUrl.includes('docs.google.com/spreadsheets')) {
     const match = targetUrl.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+    const gidMatch = targetUrl.match(/[#?&]gid=([0-9]+)/);
     if (match && match[1]) {
       const sheetId = match[1];
-      targetUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv`;
+      const gidParam = gidMatch ? `&gid=${gidMatch[1]}` : '';
+      targetUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv${gidParam}`;
     }
   }
 

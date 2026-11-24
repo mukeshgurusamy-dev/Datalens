@@ -16,6 +16,7 @@
 import React, { useRef, useCallback, useMemo } from 'react';
 import { Calendar, ZoomIn } from 'lucide-react';
 import { useTimelineBrush } from '../hooks/useTimelineBrush';
+import { parseNumberValue } from '../engine/profiler';
 import type { DatasetSchema } from '../types/dataset';
 
 // ── Props ──────────────────────────────────────────────────────────────
@@ -45,8 +46,9 @@ export const TimelineBrush: React.FC<TimelineBrushProps> = ({
     const agg = new Map<string, number>();
     for (const row of dataset.rows) {
       const dateVal = String(row[dateColumnName] ?? '');
-      const numVal = Number(row[numCol.name] ?? 0);
-      if (!isNaN(numVal)) {
+      const raw = row[numCol.name];
+      const numVal = typeof raw === 'number' ? raw : parseNumberValue(raw);
+      if (numVal !== null && !isNaN(numVal) && Number.isFinite(numVal)) {
         agg.set(dateVal, (agg.get(dateVal) ?? 0) + numVal);
       }
     }
@@ -57,7 +59,10 @@ export const TimelineBrush: React.FC<TimelineBrushProps> = ({
   // SVG sparkline path
   const sparklinePath = useMemo(() => {
     if (sparkline.length < 2) return '';
-    const max = Math.max(...sparkline, 1);
+    let max = 1;
+    for (let i = 0; i < sparkline.length; i++) {
+      if (sparkline[i] > max) max = sparkline[i];
+    }
     const w = 100;
     const h = 100;
     const stepX = w / (sparkline.length - 1);

@@ -52,18 +52,20 @@ export function filterRows(
     }
 
     // 3. Date range match
-    if (dateColumnName && dateRange) {
+    if (dateColumnName && dateRange && (dateRange.start || dateRange.end)) {
       const rawDate = row[dateColumnName];
-      if (rawDate) {
-        const cellDate = normalizeDateKey(rawDate);
-        if (cellDate) {
-          if (dateRange.start && cellDate < dateRange.start) {
-            return false;
-          }
-          if (dateRange.end && cellDate > dateRange.end) {
-            return false;
-          }
-        }
+      if (rawDate === null || rawDate === undefined || rawDate === '') {
+        return false;
+      }
+      const cellDate = normalizeDateKey(rawDate);
+      if (!cellDate) {
+        return false;
+      }
+      if (dateRange.start && cellDate < dateRange.start) {
+        return false;
+      }
+      if (dateRange.end && cellDate > dateRange.end) {
+        return false;
       }
     }
 

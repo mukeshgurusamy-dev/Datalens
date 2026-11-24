@@ -112,15 +112,20 @@ export function generateHoltForecast(
     lowerBound: lastVal,
   };
 
+  const allowNegative = values.some((v) => v < 0);
+
   // Generate out-of-sample forecast horizon (h = 1 ... horizon)
   for (let h = 1; h <= horizon; h++) {
     const projectedDate = addDays(lastDate, h);
-    const pointForecast = Math.max(0, level + h * trend);
+    const rawForecast = level + h * trend;
+    const pointForecast = allowNegative ? rawForecast : Math.max(0, rawForecast);
 
     // Dynamic 95% Confidence Interval Expansion
     const margin = 1.96 * rmse * Math.sqrt(1 + (h - 1) * alpha * alpha);
     const upperBound = Math.round((pointForecast + margin) * 100) / 100;
-    const lowerBound = Math.max(0, Math.round((pointForecast - margin) * 100) / 100);
+    const lowerBound = allowNegative
+      ? Math.round((pointForecast - margin) * 100) / 100
+      : Math.max(0, Math.round((pointForecast - margin) * 100) / 100);
 
     combined.push({
       [dateKey]: projectedDate,

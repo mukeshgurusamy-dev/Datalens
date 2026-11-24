@@ -1,4 +1,5 @@
 import type { ChartRecommendation } from '../types/dataset';
+import { parseNumberValue } from './profiler';
 
 export interface SqlQueryResult {
   columns: string[];
@@ -242,8 +243,9 @@ function computeAggregate(
   const numbers: number[] = [];
   for (const r of rows) {
     const actualCol = Object.keys(r).find((k) => k.toLowerCase() === colName.toLowerCase()) || colName;
-    const val = Number(r[actualCol]);
-    if (!isNaN(val)) {
+    const raw = r[actualCol];
+    const val = typeof raw === 'number' ? raw : parseNumberValue(raw);
+    if (val !== null && !isNaN(val) && Number.isFinite(val)) {
       numbers.push(val);
     }
   }
@@ -257,10 +259,20 @@ function computeAggregate(
       const sum = numbers.reduce((a, b) => a + b, 0);
       return Math.round((sum / numbers.length) * 10000) / 10000;
     }
-    case 'MIN':
-      return Math.min(...numbers);
-    case 'MAX':
-      return Math.max(...numbers);
+    case 'MIN': {
+      let min = numbers[0];
+      for (let i = 1; i < numbers.length; i++) {
+        if (numbers[i] < min) min = numbers[i];
+      }
+      return min;
+    }
+    case 'MAX': {
+      let max = numbers[0];
+      for (let i = 1; i < numbers.length; i++) {
+        if (numbers[i] > max) max = numbers[i];
+      }
+      return max;
+    }
     default:
       return 0;
   }
@@ -322,8 +334,11 @@ function evaluateWhereConditions(row: Record<string, any>, conditions: ParsedWhe
         if (Number(cellVal) > Number(cond.value)) return false;
         break;
       case 'LIKE': {
-        const pattern = String(cond.value).replace(/%/g, '.*');
-        const regex = new RegExp(`^${pattern}$`, 'i');
+        const escaped = String(cond.value)
+          .replace(/[-[\]{}()+?.,\\^$|#\s]/g, '\\$&')
+          .replace(/%/g, '.*')
+          .replace(/_/g, '.');
+        const regex = new RegExp(`^${escaped}$`, 'i');
         if (!regex.test(String(cellVal ?? ''))) return false;
         break;
       }

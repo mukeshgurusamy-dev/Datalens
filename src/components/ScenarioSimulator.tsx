@@ -120,8 +120,8 @@ export const ScenarioSimulator: React.FC<ScenarioSimulatorProps> = ({ dataset })
   if (!columnsChoice) return null;
 
   const hasChanges = state.parameters.some((p) => p.percentChange !== 0);
-  const maxBar = result
-    ? Math.max(...result.dataPoints.map((d) => Math.max(d.baseline, d.projected)))
+  const maxBar = result && result.dataPoints.length > 0
+    ? Math.max(1, ...result.dataPoints.map((d) => Math.max(d.baseline, d.projected)))
     : 1;
 
   return (

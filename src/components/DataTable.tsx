@@ -41,10 +41,11 @@ export const DataTable: React.FC<DataTableProps> = ({ dataset }) => {
   }, [dataset.rows, search]);
 
   const totalPages = Math.max(1, Math.ceil(filteredRows.length / rowsPerPage));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
   const paginatedRows = useMemo(() => {
-    const start = (currentPage - 1) * rowsPerPage;
+    const start = (safeCurrentPage - 1) * rowsPerPage;
     return filteredRows.slice(start, start + rowsPerPage);
-  }, [filteredRows, currentPage]);
+  }, [filteredRows, safeCurrentPage]);
 
   // Zero-dependency Virtual Windowing Hook (60 FPS scrolling for 100k+ rows)
   const {
@@ -146,7 +147,7 @@ export const DataTable: React.FC<DataTableProps> = ({ dataset }) => {
           </div>
 
           {/* Spacer div establishing total virtual height */}
-          <div style={{ height: `${totalHeight}px`, position: 'relative' }}>
+          <div style={{ height: `${Math.max(120, totalHeight)}px`, position: 'relative' }}>
             {filteredRows.length === 0 ? (
               <div className="p-8 text-center text-xs text-zinc-400">
                 No matching records found for "{search}".
@@ -259,19 +260,19 @@ export const DataTable: React.FC<DataTableProps> = ({ dataset }) => {
           {/* Pagination Footer */}
           <div className="flex items-center justify-between pt-4 text-xs text-zinc-400">
             <span>
-              Page {currentPage} of {totalPages}
+              Page {safeCurrentPage} of {totalPages}
             </span>
             <div className="flex items-center gap-1.5">
               <button
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                disabled={currentPage === 1}
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, Math.max(1, p - 1)))}
+                disabled={safeCurrentPage <= 1}
                 className="p-1.5 rounded-lg border border-zinc-800 hover:bg-zinc-800 disabled:opacity-40 disabled:hover:bg-transparent transition-colors"
               >
                 <ChevronLeft className="w-4 h-4 text-zinc-300" />
               </button>
               <button
-                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, Math.max(1, p + 1)))}
+                disabled={safeCurrentPage >= totalPages}
                 className="p-1.5 rounded-lg border border-zinc-800 hover:bg-zinc-800 disabled:opacity-40 disabled:hover:bg-transparent transition-colors"
               >
                 <ChevronRight className="w-4 h-4 text-zinc-300" />

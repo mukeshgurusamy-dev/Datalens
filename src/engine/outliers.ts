@@ -4,6 +4,8 @@
  * Computes interquartile range (IQR) to detect statistical anomalies without normal distribution assumptions.
  */
 
+import { parseNumberValue } from './profiler';
+
 export interface OutlierAnalysis {
   columnName: string;
   q1: number;
@@ -43,8 +45,8 @@ export function detectOutliers(
   const validEntries: { val: number; idx: number }[] = [];
   for (let i = 0; i < rows.length; i++) {
     const raw = rows[i][columnName];
-    const num = typeof raw === 'number' ? raw : Number(String(raw).replace(/[$€£,]/g, ''));
-    if (!isNaN(num) && raw !== null && raw !== undefined && raw !== '') {
+    const num = typeof raw === 'number' ? raw : parseNumberValue(raw);
+    if (num !== null && !isNaN(num) && Number.isFinite(num)) {
       validEntries.push({ val: num, idx: i });
     }
   }

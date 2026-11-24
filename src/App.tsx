@@ -20,7 +20,7 @@ import { CorrelationMatrix } from './components/CorrelationMatrix';
 import { ShortcutsModal } from './components/ShortcutsModal';
 import { buildChartRecommendations, aggregateChartData } from './engine/recommender';
 import { filterRows } from './engine/filter';
-import { deriveFilteredSchema } from './engine/profiler';
+import { deriveFilteredSchema, computeNumericStats } from './engine/profiler';
 import { decodeDashboardState, reconstructDatasetFromPayload } from './engine/permalink';
 import { buildPersonaKpiCards, type ExecutiveLens } from './engine/personas';
 import { telemetryStore } from './engine/telemetry-store';
@@ -248,16 +248,17 @@ export function App() {
     if (!dataset) return;
     const isNumeric = values.every((v) => typeof v === 'number');
     const numericValues = isNumeric ? values.map(Number) : [];
+    const stats = isNumeric && numericValues.length > 0 ? computeNumericStats(numericValues) : {};
     const newColumn: import('./types/dataset').ColumnProfile = {
       name: columnName,
       type: isNumeric ? 'number' : 'text',
       nullableCount: 0,
       uniqueCount: new Set(values.map(String)).size,
       ...(isNumeric && numericValues.length > 0 ? {
-        min: Math.min(...numericValues),
-        max: Math.max(...numericValues),
-        mean: numericValues.reduce((s, v) => s + v, 0) / numericValues.length,
-        sum: numericValues.reduce((s, v) => s + v, 0),
+        min: stats.min,
+        max: stats.max,
+        mean: stats.mean,
+        sum: stats.sum,
       } : {}),
     };
     const newRows = dataset.rows.map((row, i) => ({

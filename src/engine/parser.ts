@@ -28,7 +28,7 @@ export function parseCSV(file: File): Promise<Record<string, any>[]> {
  */
 export async function parseExcel(file: File): Promise<Record<string, any>[]> {
   const buffer = await file.arrayBuffer();
-  const workbook = XLSX.read(buffer, { type: 'array' });
+  const workbook = XLSX.read(buffer, { type: 'array', cellDates: true });
   const firstSheetName = workbook.SheetNames[0];
 
   if (!firstSheetName) {

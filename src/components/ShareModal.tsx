@@ -38,11 +38,21 @@ export const ShareModal: React.FC<ShareModalProps> = ({
     try {
       await navigator.clipboard.writeText(shareUrl);
       setCopied(true);
-      setTimeout(() => setCopied(false), 2500);
     } catch {
-      // Fallback
+      // Fallback: use legacy execCommand approach
+      try {
+        const textarea = document.createElement('textarea');
+        textarea.value = shareUrl;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+      } catch { /* ignore */ }
       setCopied(true);
     }
+    setTimeout(() => setCopied(false), 2500);
   };
 
   return (

@@ -77,7 +77,7 @@ export const historyStore = {
     state = {
       past: newPast,
       present: previous,
-      future: [state.present, ...state.future],
+      future: [state.present, ...state.future].slice(0, MAX_HISTORY_DEPTH),
     };
     notify();
     return previous;
@@ -90,7 +90,7 @@ export const historyStore = {
     const newFuture = state.future.slice(1);
 
     state = {
-      past: [...state.past, state.present],
+      past: [...state.past, state.present].slice(-MAX_HISTORY_DEPTH),
       present: next,
       future: newFuture,
     };

@@ -14,6 +14,7 @@
  */
 
 import type { DatasetSchema, ColumnProfile } from '../types/dataset';
+import { parseNumberValue } from './profiler';
 
 // ── Types ──────────────────────────────────────────────────────────────
 
@@ -123,8 +124,9 @@ export function runScenario(
   const groups = new Map<string, number>();
   for (const row of dataset.rows) {
     const key = String(row[categoryCol] ?? 'Unknown');
-    const val = Number(row[numericCol] ?? 0);
-    if (!isNaN(val)) {
+    const raw = row[numericCol];
+    const val = typeof raw === 'number' ? raw : (parseNumberValue(raw) ?? 0);
+    if (!isNaN(val) && Number.isFinite(val)) {
       groups.set(key, (groups.get(key) ?? 0) + val);
     }
   }

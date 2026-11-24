@@ -44,7 +44,11 @@ export const telemetryStore = {
     const updatedCommits = [commit, ...state.commits].slice(0, MAX_HISTORY);
     const sum = updatedCommits.reduce((acc, c) => acc + c.actualDuration, 0);
     const avg = updatedCommits.length > 0 ? sum / updatedCommits.length : 0;
-    const max = Math.max(state.maxDurationMs, commit.actualDuration);
+    // Recompute max from the retained window so evicted commits don't inflate the peak
+    let max = commit.actualDuration;
+    for (const c of updatedCommits) {
+      if (c.actualDuration > max) max = c.actualDuration;
+    }
 
     state = {
       commits: updatedCommits,

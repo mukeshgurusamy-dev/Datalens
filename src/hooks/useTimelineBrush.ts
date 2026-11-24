@@ -12,7 +12,7 @@
  *   exposes imperative API (setRange, resetRange, presets)
  */
 
-import { useState, useCallback, useRef, useMemo } from 'react';
+import { useState, useCallback, useRef, useMemo, useEffect } from 'react';
 
 // ── Types ──────────────────────────────────────────────────────────────
 
@@ -99,6 +99,16 @@ export function useTimelineBrush(
   });
 
   const [activePreset, setActivePreset] = useState('all');
+
+  // Sync range when dataset or date labels change
+  const prevMaxIndexRef = useRef(maxIndex);
+  useEffect(() => {
+    if (prevMaxIndexRef.current !== maxIndex) {
+      prevMaxIndexRef.current = maxIndex;
+      setRangeState({ startIndex: 0, endIndex: maxIndex });
+      setActivePreset('all');
+    }
+  }, [maxIndex]);
 
   // Drag state stored in ref — no re-renders during drag
   const dragRef = useRef<DragState>({

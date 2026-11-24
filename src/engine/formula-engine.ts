@@ -17,6 +17,8 @@
  *   Literals: numbers, quoted strings
  */
 
+import { parseNumberValue } from './profiler';
+
 // ── Token Types ────────────────────────────────────────────────────────
 
 type TokenType =
@@ -297,6 +299,10 @@ function evaluateNode(node: ASTNode, row: RowData): number | string {
       if (val === null) return 0;
       if (typeof val === 'boolean') return val ? 1 : 0;
       if (typeof val === 'number') return val;
+      if (typeof val === 'string') {
+        const parsed = parseNumberValue(val);
+        if (parsed !== null) return parsed;
+      }
       const num = Number(val);
       return isNaN(num) ? String(val) : num;
     }
@@ -346,11 +352,11 @@ function evaluateFunction(name: string, args: (number | string)[]): number | str
   const str = (v: number | string) => String(v);
 
   switch (name) {
-    case 'ABS': return Math.abs(num(args[0]));
-    case 'ROUND': return Math.round(num(args[0]) * Math.pow(10, num(args[1] ?? 0))) / Math.pow(10, num(args[1] ?? 0));
-    case 'CEIL': return Math.ceil(num(args[0]));
-    case 'FLOOR': return Math.floor(num(args[0]));
-    case 'SQRT': return Math.sqrt(num(args[0]));
+    case 'ABS': return Math.abs(num(args[0] ?? 0));
+    case 'ROUND': return Math.round(num(args[0] ?? 0) * Math.pow(10, num(args[1] ?? 0))) / Math.pow(10, num(args[1] ?? 0));
+    case 'CEIL': return Math.ceil(num(args[0] ?? 0));
+    case 'FLOOR': return Math.floor(num(args[0] ?? 0));
+    case 'SQRT': return args[0] !== undefined && num(args[0]) >= 0 ? Math.sqrt(num(args[0])) : 0;
     case 'LOG': return num(args[0]) > 0 ? Math.log(num(args[0])) : 0;
     case 'MIN': return Math.min(...args.map(num));
     case 'MAX': return Math.max(...args.map(num));
