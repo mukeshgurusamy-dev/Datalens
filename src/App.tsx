@@ -9,7 +9,6 @@ import { TimeTravelDrawer } from './components/TimeTravelDrawer';
 import { CardErrorBoundary } from './components/CardErrorBoundary';
 import { TimelineBrush } from './components/TimelineBrush';
 import { useDashboardState } from './hooks/useDashboardState';
-import { useTheme } from './hooks/useTheme';
 import { telemetryStore } from './engine/telemetry-store';
 import { LayoutGrid, Table2, SlidersHorizontal, RefreshCw } from 'lucide-react';
 
@@ -45,7 +44,6 @@ const CorrelationMatrix = lazy(() =>
 );
 
 export function App() {
-  const { theme, toggleTheme } = useTheme();
   const {
     dataset,
     activeDataset,
@@ -130,8 +128,6 @@ export function App() {
         onOpenSqlStudio={openSqlStudio}
         onOpenFormulaStudio={openFormulaStudio}
         onOpenShortcuts={openShortcuts}
-        theme={theme}
-        onToggleTheme={toggleTheme}
       />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6">

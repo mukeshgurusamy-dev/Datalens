@@ -7,12 +7,9 @@ import {
   Activity,
   Terminal,
   Calculator,
-  Sun,
-  Moon,
 } from 'lucide-react';
 import type { DatasetSchema } from '../types/dataset';
 import type { ExecutiveLens } from '../engine/personas';
-import type { AppTheme } from '../hooks/useTheme';
 
 interface HeaderProps {
   dataset: DatasetSchema | null;
@@ -26,8 +23,6 @@ interface HeaderProps {
   onOpenSqlStudio?: () => void;
   onOpenFormulaStudio?: () => void;
   onOpenShortcuts?: () => void;
-  theme?: AppTheme;
-  onToggleTheme?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = React.memo(({
@@ -42,8 +37,6 @@ export const Header: React.FC<HeaderProps> = React.memo(({
   onOpenSqlStudio,
   onOpenFormulaStudio,
   onOpenShortcuts,
-  theme = 'dark',
-  onToggleTheme,
 }) => {
   return (
     <header className="w-full border-b border-[var(--border-hairline)] bg-[var(--bg-canvas)]/85 backdrop-blur-md sticky top-0 z-30">
@@ -164,18 +157,6 @@ export const Header: React.FC<HeaderProps> = React.memo(({
                 <span className="hidden xl:inline">New Data</span>
               </button>
             </>
-          )}
-
-          {/* Theme Toggle */}
-          {onToggleTheme && (
-            <button
-              onClick={onToggleTheme}
-              aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
-              title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
-              className="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-[var(--border-hairline)] bg-[var(--bg-surface)] hover:bg-[var(--bg-elevated)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
-            >
-              {theme === 'dark' ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
-            </button>
           )}
 
           {dataset && onOpenShortcuts && (
