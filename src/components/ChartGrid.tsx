@@ -150,7 +150,7 @@ const ChartCardItem: React.FC<ChartCardItemProps> = React.memo(({
           </div>
         ) : (
           <ResponsiveContainer width="100%" height="100%" minWidth={100} minHeight={220}>
-            {chart.type === 'area' ? (
+            {chart.type === 'area' || chart.type === 'line' ? (
               <AreaChart data={activeData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id={`gradient-${chart.id}`} x1="0" y1="0" x2="0" y2="1">
@@ -186,7 +186,7 @@ const ChartCardItem: React.FC<ChartCardItemProps> = React.memo(({
                   name="Historical"
                   stroke="#3b82f6"
                   strokeWidth={2.5}
-                  fillOpacity={1}
+                  fillOpacity={chart.type === 'line' ? 0 : 1}
                   fill={`url(#gradient-${chart.id})`}
                 />
 

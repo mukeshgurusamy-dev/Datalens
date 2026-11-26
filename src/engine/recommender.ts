@@ -1,5 +1,5 @@
 import type { ChartRecommendation, ChartType, ColumnProfile, DatasetSchema, KpiCard } from '../types/dataset';
-import { formatMetric, normalizeDateKey } from './profiler';
+import { formatMetric, normalizeDateKey, parseNumberValue } from './profiler';
 
 /**
  * Dynamically aggregates tabular rows into visualization datapoints
@@ -15,14 +15,14 @@ export function aggregateChartData(
   if (!rows || rows.length === 0 || !xAxisCol || !yAxisCol) return [];
 
   const xColProfile = columns.find((c) => c.name === xAxisCol);
-  const isDateX = xColProfile?.type === 'date' || chartType === 'area';
+  const isDateX = xColProfile?.type === 'date';
 
   if (chartType === 'scatter') {
     return rows
       .slice(0, 80)
       .map((r) => ({
-        [xAxisCol]: Number(r[xAxisCol]) || 0,
-        [yAxisCol]: Number(r[yAxisCol]) || 0,
+        [xAxisCol]: parseNumberValue(r[xAxisCol]) ?? 0,
+        [yAxisCol]: parseNumberValue(r[yAxisCol]) ?? 0,
       }))
       .filter((d) => !isNaN(d[xAxisCol]) && !isNaN(d[yAxisCol]));
   }
@@ -34,7 +34,7 @@ export function aggregateChartData(
       if (!rawDate) continue;
       const key = normalizeDateKey(rawDate);
       if (!key) continue;
-      const val = Number(r[yAxisCol]) || 0;
+      const val = parseNumberValue(r[yAxisCol]) ?? 0;
       dateMap.set(key, (dateMap.get(key) || 0) + val);
     }
 
@@ -47,7 +47,7 @@ export function aggregateChartData(
       }));
   }
 
-  // Categorical aggregation (bar, donut, etc.)
+  // Categorical aggregation (bar, donut, area/line on category, etc.)
   const catMap = new Map<string, number>();
   for (const r of rows) {
     const rawCat = r[xAxisCol];
@@ -55,7 +55,7 @@ export function aggregateChartData(
       rawCat !== null && rawCat !== undefined && String(rawCat).trim() !== ''
         ? String(rawCat).trim()
         : 'Other';
-    const val = Number(r[yAxisCol]) || 0;
+    const val = parseNumberValue(r[yAxisCol]) ?? 0;
     catMap.set(cat, (catMap.get(cat) || 0) + val);
   }
 
