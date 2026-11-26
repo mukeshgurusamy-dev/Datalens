@@ -78,20 +78,22 @@ export const TimeTravelDrawer: React.FC<TimeTravelDrawerProps> = ({ onRestoreSna
       style={{ marginBottom: 'env(safe-area-inset-bottom)' }}
     >
       {/* Primary Toolbar Bar */}
-      <div className="flex items-center gap-2 px-3 py-2 bg-[#14141a]/80">
-        <div className="flex items-center gap-1.5 text-zinc-400 pl-1">
+      <div className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 sm:py-2 bg-[#14141a]/80">
+        <div className="flex items-center gap-1.5 text-zinc-400 pl-0.5 shrink-0">
           <History className="w-3.5 h-3.5 text-blue-400" />
-          <span className="font-semibold text-white tracking-tight text-[11px]">Time-Travel</span>
+          <span className="hidden sm:inline font-semibold text-white tracking-tight text-[11px]">
+            Time-Travel
+          </span>
         </div>
 
-        <div className="h-3 w-[1px] bg-zinc-800 mx-1" />
+        <div className="h-3 w-[1px] bg-zinc-800 mx-0.5 sm:mx-1 shrink-0" />
 
         {/* Undo Button */}
         <button
           onClick={handleUndo}
           disabled={!canUndo}
           title="Undo (Ctrl+Z)"
-          className={`flex items-center gap-1 px-2 py-1 rounded-lg border text-[11px] font-medium transition-colors ${
+          className={`flex items-center gap-1 px-2 min-h-[34px] sm:min-h-0 sm:py-1 rounded-lg border text-[11px] font-medium transition-colors shrink-0 ${
             canUndo
               ? 'bg-zinc-900 border-zinc-750 text-white hover:bg-zinc-800'
               : 'bg-zinc-950/40 border-zinc-850 text-zinc-600 cursor-not-allowed'
@@ -106,7 +108,7 @@ export const TimeTravelDrawer: React.FC<TimeTravelDrawerProps> = ({ onRestoreSna
           onClick={handleRedo}
           disabled={!canRedo}
           title="Redo (Ctrl+Y)"
-          className={`flex items-center gap-1 px-2 py-1 rounded-lg border text-[11px] font-medium transition-colors ${
+          className={`flex items-center gap-1 px-2 min-h-[34px] sm:min-h-0 sm:py-1 rounded-lg border text-[11px] font-medium transition-colors shrink-0 ${
             canRedo
               ? 'bg-zinc-900 border-zinc-750 text-white hover:bg-zinc-800'
               : 'bg-zinc-950/40 border-zinc-850 text-zinc-600 cursor-not-allowed'
@@ -116,13 +118,13 @@ export const TimeTravelDrawer: React.FC<TimeTravelDrawerProps> = ({ onRestoreSna
           <span>Redo</span>
         </button>
 
-        <div className="h-3 w-[1px] bg-zinc-800 mx-1" />
+        <div className="h-3 w-[1px] bg-zinc-800 mx-0.5 sm:mx-1 shrink-0" />
 
         {/* Toggle Expand */}
         <button
           onClick={() => setIsExpanded(!isExpanded)}
           title="View Timeline Stack"
-          className="flex items-center gap-1 px-2 py-1 rounded-lg bg-zinc-900/50 hover:bg-zinc-800/80 text-zinc-400 hover:text-white transition-colors text-[11px]"
+          className="flex items-center gap-1 px-2 min-h-[34px] sm:min-h-0 sm:py-1 rounded-lg bg-zinc-900/50 hover:bg-zinc-800/80 text-zinc-400 hover:text-white transition-colors text-[11px] shrink-0"
         >
           <Clock className="w-3 h-3 text-emerald-400" />
           <span>{allSnapshots.length}</span>
@@ -132,7 +134,7 @@ export const TimeTravelDrawer: React.FC<TimeTravelDrawerProps> = ({ onRestoreSna
 
       {/* Expanded History Stack Drawer */}
       {isExpanded && (
-        <div className="p-3 border-t border-zinc-800 bg-[#0d0d11]/90 max-h-60 overflow-y-auto space-y-1.5">
+        <div className="p-3 border-t border-zinc-800 bg-[#0d0d11]/90 max-h-[45dvh] sm:max-h-60 overflow-y-auto space-y-1.5">
           <div className="text-[10px] text-zinc-400 uppercase tracking-wider font-semibold mb-2">
             Session State Timeline
           </div>

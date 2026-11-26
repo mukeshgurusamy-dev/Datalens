@@ -129,21 +129,21 @@ export const ScenarioSimulator: React.FC<ScenarioSimulatorProps> = ({ dataset })
       {/* Collapsible Header */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full flex items-center justify-between px-5 py-4 hover:bg-zinc-900/40 transition-colors"
+        className="w-full flex items-center justify-between gap-2 px-3.5 sm:px-5 py-3.5 sm:py-4 hover:bg-zinc-900/40 transition-colors"
       >
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-orange-500/10 border border-orange-500/20 flex items-center justify-center">
+        <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-wrap">
+          <div className="w-8 h-8 rounded-lg bg-orange-500/10 border border-orange-500/20 flex items-center justify-center shrink-0">
             <Sliders className="w-4 h-4 text-orange-400" />
           </div>
-          <div className="text-left">
+          <div className="text-left min-w-0">
             <h3 className="text-sm font-semibold text-white">What-If Sensitivity Simulator</h3>
-            <p className="text-[11px] text-zinc-500">
+            <p className="text-[11px] text-zinc-500 truncate">
               Parametric scenario analysis — adjust sliders to project impact
             </p>
           </div>
           {hasChanges && result && (
             <span
-              className={`ml-2 text-[11px] px-2 py-0.5 rounded-full font-mono font-semibold ${
+              className={`text-[11px] px-2 py-0.5 rounded-full font-mono font-semibold shrink-0 ${
                 result.netImpact >= 0
                   ? 'bg-emerald-500/15 border border-emerald-500/30 text-emerald-400'
                   : 'bg-red-500/15 border border-red-500/30 text-red-400'
@@ -155,25 +155,25 @@ export const ScenarioSimulator: React.FC<ScenarioSimulatorProps> = ({ dataset })
           )}
         </div>
         {isExpanded ? (
-          <ChevronUp className="w-4 h-4 text-zinc-500" />
+          <ChevronUp className="w-4 h-4 text-zinc-500 shrink-0" />
         ) : (
-          <ChevronDown className="w-4 h-4 text-zinc-500" />
+          <ChevronDown className="w-4 h-4 text-zinc-500 shrink-0" />
         )}
       </button>
 
       {/* Expandable Body */}
       {isExpanded && (
-        <div className="px-5 pb-5 border-t border-zinc-800/60">
+        <div className="px-3.5 sm:px-5 pb-4 sm:pb-5 border-t border-zinc-800/60">
           {/* Column Selectors */}
-          <div className="flex flex-wrap gap-3 mt-4 mb-5">
-            <div className="flex items-center gap-2">
-              <label className="text-[11px] text-zinc-500 uppercase font-mono">Target Metric</label>
+          <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3 mt-4 mb-5">
+            <div className="flex items-center justify-between sm:justify-start gap-2 min-w-0">
+              <label className="text-[11px] text-zinc-500 uppercase font-mono shrink-0">Target Metric</label>
               <select
                 value={state.targetCol}
                 onChange={(e) =>
                   dispatch({ type: 'SET_COLUMNS', targetCol: e.target.value, groupCol: state.groupCol })
                 }
-                className="text-xs bg-zinc-900 border border-zinc-700 text-white rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-orange-500/50"
+                className="min-w-0 flex-1 sm:flex-initial text-xs bg-zinc-900 border border-zinc-700 text-white rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-orange-500/50"
               >
                 {numericCols.map((col) => (
                   <option key={col} value={col}>
@@ -182,14 +182,14 @@ export const ScenarioSimulator: React.FC<ScenarioSimulatorProps> = ({ dataset })
                 ))}
               </select>
             </div>
-            <div className="flex items-center gap-2">
-              <label className="text-[11px] text-zinc-500 uppercase font-mono">Group By</label>
+            <div className="flex items-center justify-between sm:justify-start gap-2 min-w-0">
+              <label className="text-[11px] text-zinc-500 uppercase font-mono shrink-0">Group By</label>
               <select
                 value={state.groupCol}
                 onChange={(e) =>
                   dispatch({ type: 'SET_COLUMNS', targetCol: state.targetCol, groupCol: e.target.value })
                 }
-                className="text-xs bg-zinc-900 border border-zinc-700 text-white rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-orange-500/50"
+                className="min-w-0 flex-1 sm:flex-initial text-xs bg-zinc-900 border border-zinc-700 text-white rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-orange-500/50"
               >
                 {categoryCols.map((col) => (
                   <option key={col} value={col}>
@@ -201,7 +201,7 @@ export const ScenarioSimulator: React.FC<ScenarioSimulatorProps> = ({ dataset })
             <button
               onClick={handleReset}
               disabled={!hasChanges}
-              className="ml-auto inline-flex items-center gap-1 text-[11px] text-zinc-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              className="self-end sm:self-auto sm:ml-auto inline-flex items-center gap-1 text-[11px] text-zinc-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors py-1"
             >
               <RotateCcw className="w-3 h-3" />
               Reset All
@@ -219,7 +219,7 @@ export const ScenarioSimulator: React.FC<ScenarioSimulatorProps> = ({ dataset })
           {result && result.dataPoints.length > 0 && (
             <div>
               {/* Summary Cards */}
-              <div className="grid grid-cols-3 gap-3 mb-5">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3 mb-5">
                 <SummaryCard
                   label="Baseline Total"
                   value={formatCompact(result.totalBaselineSum)}
@@ -288,7 +288,7 @@ export const ScenarioSimulator: React.FC<ScenarioSimulatorProps> = ({ dataset })
               </div>
 
               {/* Legend */}
-              <div className="flex items-center gap-4 mt-4 pt-3 border-t border-zinc-800/50">
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mt-4 pt-3 border-t border-zinc-800/50">
                 <div className="flex items-center gap-1.5 text-[10px] text-zinc-500">
                   <div className="w-3 h-1.5 rounded-full bg-zinc-600" />
                   Baseline
@@ -322,9 +322,24 @@ const SliderRow: React.FC<SliderRowProps> = ({ param, onChange }) => {
   const isNegative = param.percentChange < 0;
 
   return (
-    <div className="flex items-center gap-4">
-      <div className="w-48 shrink-0">
-        <span className="text-xs text-zinc-300 font-medium">{param.label}</span>
+    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+      <div className="flex items-center justify-between sm:contents">
+        <div className="sm:w-44 shrink-0">
+          <span className="text-xs text-zinc-300 font-medium">{param.label}</span>
+        </div>
+        <div className="flex items-center gap-1 sm:order-3 sm:w-20 sm:justify-end">
+          {isPositive && <TrendingUp className="w-3 h-3 text-emerald-400" />}
+          {isNegative && <TrendingDown className="w-3 h-3 text-red-400" />}
+          {!isPositive && !isNegative && <Minus className="w-3 h-3 text-zinc-600" />}
+          <span
+            className={`text-xs font-mono font-semibold text-right ${
+              isPositive ? 'text-emerald-400' : isNegative ? 'text-red-400' : 'text-zinc-500'
+            }`}
+          >
+            {param.percentChange > 0 ? '+' : ''}
+            {param.percentChange}%
+          </span>
+        </div>
       </div>
       <input
         type="range"
@@ -333,21 +348,8 @@ const SliderRow: React.FC<SliderRowProps> = ({ param, onChange }) => {
         step={param.step}
         value={param.percentChange}
         onChange={(e) => onChange(param.id, Number(e.target.value))}
-        className="flex-1 h-1.5 bg-zinc-800 rounded-full appearance-none cursor-pointer accent-orange-500"
+        className="w-full sm:flex-1 sm:order-2 h-2 sm:h-1.5 bg-zinc-800 rounded-full appearance-none cursor-pointer accent-orange-500"
       />
-      <div className="w-20 flex items-center justify-end gap-1">
-        {isPositive && <TrendingUp className="w-3 h-3 text-emerald-400" />}
-        {isNegative && <TrendingDown className="w-3 h-3 text-red-400" />}
-        {!isPositive && !isNegative && <Minus className="w-3 h-3 text-zinc-600" />}
-        <span
-          className={`text-xs font-mono font-semibold w-12 text-right ${
-            isPositive ? 'text-emerald-400' : isNegative ? 'text-red-400' : 'text-zinc-500'
-          }`}
-        >
-          {param.percentChange > 0 ? '+' : ''}
-          {param.percentChange}%
-        </span>
-      </div>
     </div>
   );
 };
