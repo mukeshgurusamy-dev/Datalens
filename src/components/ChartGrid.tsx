@@ -89,13 +89,10 @@ const ChartCardItem: React.FC<ChartCardItemProps> = React.memo(({
   return (
     <motion.div
       data-chart-id={chart.id}
-      initial={{ opacity: 0, y: 18 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.12 }}
-      transition={{ duration: 0.36, delay: (idx % 2) * 0.06, ease: [0.22, 1, 0.36, 1] }}
-      className={`spotlight-card rounded-xl p-5 flex flex-col justify-between group min-w-0 overflow-hidden ${
-        idx >= 2 ? 'cv-auto' : ''
-      }`}
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.24, delay: (idx % 2) * 0.04, ease: [0.22, 1, 0.36, 1] }}
+      className="spotlight-card rounded-xl p-5 flex flex-col justify-between group min-w-0 overflow-hidden"
     >
       {/* Header */}
       <div className="flex items-start justify-between gap-4 mb-4">

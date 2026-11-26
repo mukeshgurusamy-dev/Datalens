@@ -3,7 +3,7 @@ import { MotionConfig, motion, AnimatePresence } from 'motion/react';
 import { Header } from './components/Header';
 import { Dropzone } from './components/Dropzone';
 import { CardErrorBoundary } from './components/CardErrorBoundary';
-import { FLUID_SPRING, ScrollReveal } from './components/MotionPrimitives';
+import { FLUID_SPRING } from './components/MotionPrimitives';
 import { useDashboardState } from './hooks/useDashboardState';
 import { telemetryStore } from './engine/telemetry-store';
 import { scheduleIdlePrefetch } from './utils/performance';
@@ -314,13 +314,11 @@ export function App() {
                   exit={{ opacity: 0, y: -4 }}
                   transition={{ duration: 0.16, ease: 'easeOut' }}
                 >
-                  <ScrollReveal>
-                    <CardErrorBoundary fallbackTitle="Data Grid Anomaly">
-                      <Suspense fallback={<div className="h-[520px] rounded-xl bg-[var(--bg-surface)] border border-[var(--border-hairline)] animate-pulse" />}>
-                        <DataTable dataset={activeDataset} />
-                      </Suspense>
-                    </CardErrorBoundary>
-                  </ScrollReveal>
+                  <CardErrorBoundary fallbackTitle="Data Grid Anomaly">
+                    <Suspense fallback={<div className="h-[520px] rounded-xl bg-[var(--bg-surface)] border border-[var(--border-hairline)] animate-pulse" />}>
+                      <DataTable dataset={activeDataset} />
+                    </Suspense>
+                  </CardErrorBoundary>
                 </motion.div>
               )}
 
@@ -332,19 +330,15 @@ export function App() {
                   exit={{ opacity: 0, y: -4 }}
                   transition={{ duration: 0.16, ease: 'easeOut' }}
                 >
-                  <Suspense fallback={null}>
+                  <Suspense fallback={<div className="h-[480px] rounded-xl bg-[var(--bg-surface)] border border-[var(--border-hairline)] animate-pulse" />}>
                     <div className="space-y-6">
-                      <ScrollReveal>
-                        <CardErrorBoundary fallbackTitle="Scenario Simulator Anomaly">
-                          <ScenarioSimulator dataset={activeDataset} />
-                        </CardErrorBoundary>
-                      </ScrollReveal>
+                      <CardErrorBoundary fallbackTitle="Scenario Simulator Anomaly">
+                        <ScenarioSimulator dataset={activeDataset} />
+                      </CardErrorBoundary>
 
-                      <ScrollReveal delay={0.06}>
-                        <CardErrorBoundary fallbackTitle="Correlation Matrix Anomaly">
-                          <CorrelationMatrix dataset={activeDataset} />
-                        </CardErrorBoundary>
-                      </ScrollReveal>
+                      <CardErrorBoundary fallbackTitle="Correlation Matrix Anomaly">
+                        <CorrelationMatrix dataset={activeDataset} />
+                      </CardErrorBoundary>
                     </div>
                   </Suspense>
                 </motion.div>

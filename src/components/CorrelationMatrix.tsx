@@ -21,7 +21,7 @@ interface CorrelationMatrixProps {
 }
 
 export const CorrelationMatrix: React.FC<CorrelationMatrixProps> = React.memo(({ dataset }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true);
 
   const numericColumns = useMemo(() => {
     return dataset.columns

@@ -66,7 +66,7 @@ interface ScenarioSimulatorProps {
 // ── Component ──────────────────────────────────────────────────────────
 
 export const ScenarioSimulator: React.FC<ScenarioSimulatorProps> = ({ dataset }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true);
 
   // Pick best columns
   const columnsChoice = useMemo(() => pickScenarioColumns(dataset.columns), [dataset.columns]);

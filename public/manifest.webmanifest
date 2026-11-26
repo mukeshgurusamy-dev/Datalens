@@ -2,13 +2,13 @@
   "name": "DataLens — Browser-Native Analytics Studio",
   "short_name": "DataLens",
   "description": "Zero-server client-side business intelligence and data analytics studio for CSV, Excel, JSON, and Google Sheets.",
-  "start_url": "/",
+  "start_url": ".",
   "display": "standalone",
   "background_color": "#09090b",
   "theme_color": "#09090b",
   "icons": [
     {
-      "src": "/favicon.svg",
+      "src": "./favicon.svg",
       "sizes": "any",
       "type": "image/svg+xml"
     }
