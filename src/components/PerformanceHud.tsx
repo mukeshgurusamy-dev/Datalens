@@ -30,7 +30,6 @@ const PerformanceHudContent: React.FC<{
         <div className="flex items-center gap-2">
           <div className="relative">
             <Activity className="w-4 h-4 text-emerald-400" />
-            <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
           </div>
           <span className="font-semibold text-white tracking-tight">React 19 Telemetry HUD</span>
           <span className={`text-[10px] px-1.5 py-0.5 rounded border font-mono ${statusColor}`}>

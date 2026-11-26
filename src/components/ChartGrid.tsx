@@ -16,7 +16,7 @@ import {
   CartesianGrid,
   Tooltip,
 } from 'recharts';
-import { Sliders, TrendingUp, Sparkles, BarChart3 } from 'lucide-react';
+import { Sliders, TrendingUp, BarChart3 } from 'lucide-react';
 import type { ChartRecommendation } from '../types/dataset';
 import { lttbDownsample } from '../engine/lttb';
 import { generateHoltForecast } from '../engine/forecasting';
@@ -28,21 +28,21 @@ interface ChartGridProps {
   activeFilters?: Record<string, string[]>;
 }
 
-const COLORS = ['#3b82f6', '#6366f1', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#06b6d4'];
+const COLORS = ['#3b82f6', '#14b8a6', '#f59e0b', '#6366f1', '#ec4899', '#64748b'];
 
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-[#18181b] border border-zinc-700 p-3 rounded-lg shadow-xl text-xs">
-        {label && <p className="font-semibold text-zinc-300 mb-1">{label}</p>}
+      <div className="bg-[var(--bg-surface)] border border-[var(--border-strong)] p-3 rounded-lg shadow-lg text-xs">
+        {label && <p className="font-medium text-[var(--text-secondary)] mb-1.5">{label}</p>}
         {payload.map((item: any, idx: number) => (
-          <p key={idx} className="text-zinc-400 flex items-center gap-2">
+          <p key={idx} className="text-[var(--text-muted)] flex items-center gap-2">
             <span
               className="w-2 h-2 rounded-full"
               style={{ backgroundColor: item.color || item.fill || '#3b82f6' }}
             />
             <span className="capitalize">{item.name || item.dataKey}:</span>
-            <span className="font-mono font-semibold text-white">
+            <span className="font-mono font-semibold text-[var(--text-primary)] tabular-nums">
               {typeof item.value === 'number' ? item.value.toLocaleString() : item.value}
             </span>
           </p>
@@ -89,26 +89,26 @@ const ChartCardItem: React.FC<ChartCardItemProps> = React.memo(({
   return (
     <motion.div
       data-chart-id={chart.id}
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ type: 'spring', stiffness: 300, damping: 25, delay: idx * 0.08 }}
-      className="spotlight-card rounded-2xl p-6 flex flex-col justify-between group min-w-0 overflow-hidden"
+      transition={{ duration: 0.18, delay: idx * 0.04, ease: 'easeOut' }}
+      className="spotlight-card rounded-xl p-5 flex flex-col justify-between group min-w-0 overflow-hidden"
     >
       {/* Header */}
       <div className="flex items-start justify-between gap-4 mb-4">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <h3 className="text-base font-semibold text-white tracking-tight">
+          <div className="flex items-center gap-2 mb-0.5">
+            <h3 className="text-sm font-semibold text-[var(--text-primary)] tracking-tight">
               {chart.title}
             </h3>
             {forecastResult && (
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-mono flex items-center gap-1">
+              <span className="text-[10px] px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 font-mono flex items-center gap-1">
                 <TrendingUp className="w-3 h-3" />
                 <span>{forecastResult.direction.toUpperCase()} (+7D)</span>
               </span>
             )}
           </div>
-          <p className="text-xs text-zinc-400">
+          <p className="text-xs text-[var(--text-muted)]">
             {chart.description}
           </p>
         </div>
@@ -118,13 +118,13 @@ const ChartCardItem: React.FC<ChartCardItemProps> = React.memo(({
             <button
               onClick={() => setShowForecast(!showForecast)}
               title="Toggle Holt Linear Trend Forecast"
-              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium border transition-all ${
+              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium border transition-colors ${
                 showForecast
-                  ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
-                  : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700'
+                  ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-500'
+                  : 'bg-[var(--bg-elevated)] border-[var(--border-hairline)] text-[var(--text-muted)] hover:text-[var(--text-primary)]'
               }`}
             >
-              <Sparkles className="w-3 h-3" />
+              <TrendingUp className="w-3 h-3" />
               <span>{showForecast ? 'Hide Forecast' : 'Forecast +7D'}</span>
             </button>
           )}
@@ -133,7 +133,7 @@ const ChartCardItem: React.FC<ChartCardItemProps> = React.memo(({
             <button
               onClick={() => onCustomize(chart)}
               title="Customize visualization"
-              className="opacity-60 group-hover:opacity-100 p-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700 transition-all"
+              className="opacity-70 group-hover:opacity-100 p-1.5 rounded-md bg-[var(--bg-elevated)] border border-[var(--border-hairline)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
             >
               <Sliders className="w-3.5 h-3.5" />
             </button>

@@ -90,15 +90,15 @@ export const FilterBar: React.FC<FilterBarProps> = React.memo(({
   if (categoryColumns.length === 0) return null;
 
   return (
-    <div className="w-full bg-[#121215] border border-zinc-800/80 rounded-2xl p-4 mb-6 shadow-sm" ref={dropdownRef}>
+    <div className="w-full bg-[var(--bg-surface)] border border-[var(--border-hairline)] rounded-xl p-3.5 mb-5" ref={dropdownRef}>
       <div className="flex flex-wrap items-center justify-between gap-3">
         {/* Left: Filter Label & Category Dropdowns */}
         <div className="flex flex-wrap items-center gap-2">
-          <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-zinc-300 pr-2 border-r border-zinc-800">
-            <Filter className="w-3.5 h-3.5 text-blue-400" />
+          <div className="inline-flex items-center gap-1.5 text-xs font-medium text-[var(--text-secondary)] pr-2.5 border-r border-[var(--border-hairline)]">
+            <Filter className="w-3.5 h-3.5 text-blue-500" />
             <span>Filters</span>
             {activeFiltersCount > 0 && (
-              <span className="w-4 h-4 rounded-full bg-blue-500 text-white font-mono text-[10px] flex items-center justify-center">
+              <span className="w-4 h-4 rounded-full bg-blue-600 text-white font-mono text-[10px] flex items-center justify-center">
                 {activeFiltersCount}
               </span>
             )}
@@ -122,19 +122,19 @@ export const FilterBar: React.FC<FilterBarProps> = React.memo(({
                     setOpenDropdown(isOpen ? null : col.name);
                     setDropdownSearch('');
                   }}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
                     selectedVals.length > 0
-                      ? 'bg-blue-500/10 border-blue-500/30 text-blue-300'
-                      : 'bg-[#18181b] border-zinc-800 text-zinc-300 hover:border-zinc-700'
+                      ? 'bg-blue-500/10 border-blue-500/30 text-blue-400'
+                      : 'bg-[var(--bg-elevated)] border-[var(--border-hairline)] text-[var(--text-secondary)] hover:border-[var(--border-strong)]'
                   }`}
                 >
                   <span>{col.name}</span>
                   {selectedVals.length > 0 && (
-                    <span className="px-1.5 py-0.2 rounded bg-blue-500/20 text-blue-300 font-mono text-[10px]">
+                    <span className="px-1.5 py-0.2 rounded bg-blue-500/20 text-blue-400 font-mono text-[10px]">
                       {selectedVals.length}
                     </span>
                   )}
-                  <ChevronDown className={`w-3 h-3 text-zinc-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                  <ChevronDown className={`w-3 h-3 text-[var(--text-muted)] transition-transform ${isOpen ? 'rotate-180' : ''}`} />
                 </button>
 
                 {/* Dropdown Menu */}

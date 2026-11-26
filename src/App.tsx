@@ -9,8 +9,11 @@ import { TimeTravelDrawer } from './components/TimeTravelDrawer';
 import { CardErrorBoundary } from './components/CardErrorBoundary';
 import { TimelineBrush } from './components/TimelineBrush';
 import { useDashboardState } from './hooks/useDashboardState';
+import { useTheme } from './hooks/useTheme';
 import { telemetryStore } from './engine/telemetry-store';
-import { Layers, RefreshCw } from 'lucide-react';
+import { LayoutGrid, Table2, SlidersHorizontal, RefreshCw } from 'lucide-react';
+
+type WorkspaceTab = 'overview' | 'data' | 'modeling';
 
 // Lazy-loaded modals and secondary analytical panels to keep initial bundle lean
 const ChartCustomizer = lazy(() =>
@@ -42,6 +45,7 @@ const CorrelationMatrix = lazy(() =>
 );
 
 export function App() {
+  const { theme, toggleTheme } = useTheme();
   const {
     dataset,
     activeDataset,
@@ -67,6 +71,7 @@ export function App() {
     handleReset: resetDashboardState,
   } = useDashboardState();
 
+  const [activeTab, setActiveTab] = useState<WorkspaceTab>('overview');
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isTelemetryOpen, setIsTelemetryOpen] = useState(false);
@@ -91,10 +96,10 @@ export function App() {
   const handleReset = useCallback(() => {
     setIsExportModalOpen(false);
     setIsShareModalOpen(false);
+    setActiveTab('overview');
     resetDashboardState();
   }, [resetDashboardState]);
 
-  // React Native Profiler callback tracking fiber commits only on dashboard area
   const handleProfilerRender: ProfilerOnRenderCallback = useCallback(
     (id, phase, actualDuration, baseDuration, startTime, commitTime) => {
       if (id === 'DataLensCanvas') {
@@ -112,7 +117,7 @@ export function App() {
   );
 
   return (
-    <div className="min-h-screen bg-[#09090b] text-[#f4f4f5] flex flex-col font-sans">
+    <div className="min-h-screen bg-[var(--bg-canvas)] text-[var(--text-primary)] flex flex-col font-sans">
       <Header
         dataset={dataset}
         onReset={handleReset}
@@ -125,94 +130,139 @@ export function App() {
         onOpenSqlStudio={openSqlStudio}
         onOpenFormulaStudio={openFormulaStudio}
         onOpenShortcuts={openShortcuts}
+        theme={theme}
+        onToggleTheme={toggleTheme}
       />
 
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-8">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6">
         {!dataset ? (
           <Dropzone onDatasetLoaded={handleDatasetLoaded} />
         ) : (
           <div>
-            {/* Top Insight Badge with Concurrent Transition indicator */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 pb-6 border-b border-zinc-800/80">
+            {/* Workspace Header + Sub-Navigation */}
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6 pb-4 border-b border-[var(--border-hairline)]">
               <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+                <div className="flex items-center gap-2.5 mb-1">
+                  <h1 className="text-xl sm:text-2xl font-semibold text-[var(--text-primary)] tracking-tight">
                     {dataset.name}
                   </h1>
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-medium">
-                    Live Analysis
-                  </span>
                   {isPending && (
-                    <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 font-mono animate-pulse">
+                    <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-md bg-[var(--bg-elevated)] border border-[var(--border-hairline)] text-[var(--text-muted)] font-mono">
                       <RefreshCw className="w-3 h-3 animate-spin" />
-                      Transitioning...
+                      Updating
                     </span>
                   )}
                 </div>
-                <p className="text-xs text-zinc-400">
-                  Profiled {dataset.rowCount.toLocaleString()} records across {dataset.columnCount} columns.
+                <p className="text-xs text-[var(--text-muted)] font-mono tabular-nums">
+                  {filteredRows.length.toLocaleString()} of {dataset.rowCount.toLocaleString()} rows •{' '}
+                  {dataset.columnCount} columns (
+                  {dataset.columns.filter((c) => c.type === 'number').length} numeric,{' '}
+                  {dataset.columns.filter((c) => c.type === 'category').length} categorical)
                 </p>
               </div>
 
-              <div className="flex items-center gap-2">
-                <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-xs text-zinc-400">
-                  <Layers className="w-3.5 h-3.5 text-blue-400" />
-                  <span>
-                    {dataset.columns.filter((c) => c.type === 'number').length} Numeric,{' '}
-                    {dataset.columns.filter((c) => c.type === 'category').length} Categories
-                  </span>
-                </div>
-              </div>
+              {/* Workspace Tabs */}
+              <nav
+                aria-label="Workspace views"
+                className="inline-flex items-center bg-[var(--bg-surface)] border border-[var(--border-hairline)] rounded-lg p-1 text-xs font-medium self-start"
+              >
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('overview')}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-colors ${
+                    activeTab === 'overview'
+                      ? 'bg-[var(--bg-elevated)] text-[var(--text-primary)] border border-[var(--border-hairline)]'
+                      : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] border border-transparent'
+                  }`}
+                >
+                  <LayoutGrid className="w-3.5 h-3.5" />
+                  <span>Overview</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('data')}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-colors ${
+                    activeTab === 'data'
+                      ? 'bg-[var(--bg-elevated)] text-[var(--text-primary)] border border-[var(--border-hairline)]'
+                      : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] border border-transparent'
+                  }`}
+                >
+                  <Table2 className="w-3.5 h-3.5" />
+                  <span>Data Explorer</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('modeling')}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-colors ${
+                    activeTab === 'modeling'
+                      ? 'bg-[var(--bg-elevated)] text-[var(--text-primary)] border border-[var(--border-hairline)]'
+                      : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] border border-transparent'
+                  }`}
+                >
+                  <SlidersHorizontal className="w-3.5 h-3.5" />
+                  <span>Modeling &amp; Matrix</span>
+                </button>
+              </nav>
             </div>
 
-            {/* Global Interactive Filter Ribbon (Ignored in PDF/PNG export) */}
-            <div data-export-ignore="true">
-              <FilterBar
-                columns={dataset.columns}
-                filters={filters}
-                onFilterChange={handleFilterChange}
-                totalRowCount={dataset.rowCount}
-                filteredRowCount={filteredRows.length}
-              />
-            </div>
-
-            {/* Interactive Timeline Brush & Drag-Zoom (for date-indexed datasets) */}
-            {dateColumnName && (
+            {/* Global Filter Ribbon */}
+            {(activeTab === 'overview' || activeTab === 'data') && (
               <div data-export-ignore="true">
-                <CardErrorBoundary fallbackTitle="Timeline Brush Anomaly">
-                  <TimelineBrush
-                    dataset={dataset}
-                    dateColumnName={dateColumnName}
-                    onRangeChange={handleDateRangeChange}
-                  />
-                </CardErrorBoundary>
+                <FilterBar
+                  columns={dataset.columns}
+                  filters={filters}
+                  onFilterChange={handleFilterChange}
+                  totalRowCount={dataset.rowCount}
+                  filteredRowCount={filteredRows.length}
+                />
               </div>
             )}
 
-            {/* Printable & Exportable Canvas Container wrapped in targeted Profiler */}
-            <Profiler id="DataLensCanvas" onRender={handleProfilerRender}>
-              <div id="dashboard-printable-area" className="p-2 sm:p-4 rounded-2xl bg-[#09090b]">
-                {/* Executive KPI Cards */}
-                <CardErrorBoundary fallbackTitle="Executive KPI Anomaly">
-                  <KpiRow cards={kpis} />
-                </CardErrorBoundary>
-
-                {/* Recommended Charts with Direct Interactive Cross-Filtering */}
-                <CardErrorBoundary fallbackTitle="Visualization Engine Anomaly">
-                  <ChartGrid
-                    charts={charts}
-                    onCustomizeChart={setEditingChart}
-                    onCrossFilter={handleCrossFilter}
-                    activeFilters={filters.selectedCategories}
-                  />
-                </CardErrorBoundary>
-              </div>
-            </Profiler>
-
-            {/* Secondary Analytical Panels & Raw Records Table */}
-            {activeDataset && (
+            {/* Overview Tab: Timeline Brush, KPIs, Visualizations */}
+            {activeTab === 'overview' && (
               <>
-                <Suspense fallback={null}>
+                {dateColumnName && (
+                  <div data-export-ignore="true">
+                    <CardErrorBoundary fallbackTitle="Timeline Brush Anomaly">
+                      <TimelineBrush
+                        dataset={dataset}
+                        dateColumnName={dateColumnName}
+                        onRangeChange={handleDateRangeChange}
+                      />
+                    </CardErrorBoundary>
+                  </div>
+                )}
+
+                <Profiler id="DataLensCanvas" onRender={handleProfilerRender}>
+                  <div id="dashboard-printable-area" className="rounded-xl">
+                    <CardErrorBoundary fallbackTitle="Executive KPI Anomaly">
+                      <KpiRow cards={kpis} />
+                    </CardErrorBoundary>
+
+                    <CardErrorBoundary fallbackTitle="Visualization Engine Anomaly">
+                      <ChartGrid
+                        charts={charts}
+                        onCustomizeChart={setEditingChart}
+                        onCrossFilter={handleCrossFilter}
+                        activeFilters={filters.selectedCategories}
+                      />
+                    </CardErrorBoundary>
+                  </div>
+                </Profiler>
+              </>
+            )}
+
+            {/* Data Explorer Tab: 60 FPS Virtualized Table */}
+            {activeTab === 'data' && activeDataset && (
+              <CardErrorBoundary fallbackTitle="Data Grid Anomaly">
+                <DataTable dataset={activeDataset} />
+              </CardErrorBoundary>
+            )}
+
+            {/* Modeling & Matrix Tab: What-If Simulator & Correlation Matrix */}
+            {activeTab === 'modeling' && activeDataset && (
+              <Suspense fallback={null}>
+                <div className="space-y-6">
                   <CardErrorBoundary fallbackTitle="Scenario Simulator Anomaly">
                     <ScenarioSimulator dataset={activeDataset} />
                   </CardErrorBoundary>
@@ -220,12 +270,8 @@ export function App() {
                   <CardErrorBoundary fallbackTitle="Correlation Matrix Anomaly">
                     <CorrelationMatrix dataset={activeDataset} />
                   </CardErrorBoundary>
-                </Suspense>
-
-                <CardErrorBoundary fallbackTitle="Data Grid Anomaly">
-                  <DataTable dataset={activeDataset} />
-                </CardErrorBoundary>
-              </>
+                </div>
+              </Suspense>
             )}
 
             {/* Lazy-loaded Modals & Overlays */}
@@ -295,17 +341,14 @@ export function App() {
               )}
             </Suspense>
 
-            {/* Interactive Time-Travel History Drawer & Undo/Redo Engine */}
+            {/* Interactive Time-Travel History Drawer */}
             <TimeTravelDrawer onRestoreSnapshot={handleRestoreSnapshot} />
           </div>
         )}
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-zinc-850 py-6 text-center text-xs text-zinc-500">
-        <p>
-          DataLens Engine — Built with React 19 Concurrent Architecture, TypeScript, Tailwind CSS & Motion
-        </p>
+      <footer className="border-t border-[var(--border-hairline)] py-4 text-center text-xs text-[var(--text-muted)]">
+        <p>DataLens — Browser-Native Analytics Studio</p>
       </footer>
     </div>
   );

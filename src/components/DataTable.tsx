@@ -63,57 +63,57 @@ export const DataTable: React.FC<DataTableProps> = React.memo(({ dataset }) => {
   });
 
   return (
-    <div className="spotlight-card rounded-2xl p-6 mb-12">
+    <div className="spotlight-card rounded-xl p-5 mb-10">
       {/* Table Toolbar */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-5">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <h3 className="text-base font-semibold text-white tracking-tight">
+          <div className="flex items-center gap-2 mb-0.5">
+            <h3 className="text-sm font-semibold text-[var(--text-primary)] tracking-tight">
               Raw Records Explorer
             </h3>
             {viewMode === 'virtual' && (
-              <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-mono font-medium">
+              <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-md bg-[var(--bg-elevated)] border border-[var(--border-hairline)] text-[var(--text-muted)] font-mono tabular-nums">
                 <Cpu className="w-3 h-3" />
-                Virtual DOM Active: {activeMountedCount} Nodes Mounted
+                {activeMountedCount} DOM nodes
               </span>
             )}
           </div>
-          <p className="text-xs text-zinc-400">
+          <p className="text-xs text-[var(--text-muted)] font-mono tabular-nums">
             Showing {filteredRows.length.toLocaleString()} of {dataset.rowCount.toLocaleString()} records ({dataset.columnCount} columns)
           </p>
         </div>
 
         {/* View Mode Toggle & Search Input */}
-        <div className="flex items-center gap-3 w-full sm:w-auto">
+        <div className="flex items-center gap-2.5 w-full sm:w-auto">
           {/* Segmented Control */}
-          <div className="inline-flex items-center p-0.5 rounded-lg bg-zinc-900 border border-zinc-800 text-xs">
+          <div className="inline-flex items-center p-0.5 rounded-lg bg-[var(--bg-elevated)] border border-[var(--border-hairline)] text-xs">
             <button
               onClick={() => setViewMode('virtual')}
               className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md transition-colors ${
                 viewMode === 'virtual'
-                  ? 'bg-zinc-800 text-white font-medium shadow-sm'
-                  : 'text-zinc-400 hover:text-zinc-200'
+                  ? 'bg-[var(--bg-surface)] text-[var(--text-primary)] font-medium border border-[var(--border-hairline)]'
+                  : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] border border-transparent'
               }`}
             >
-              <Cpu className="w-3 h-3 text-emerald-400" />
-              <span>Virtual Grid (60 FPS)</span>
+              <Cpu className="w-3 h-3" />
+              <span>Virtual Grid</span>
             </button>
             <button
               onClick={() => setViewMode('paginated')}
               className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md transition-colors ${
                 viewMode === 'paginated'
-                  ? 'bg-zinc-800 text-white font-medium shadow-sm'
-                  : 'text-zinc-400 hover:text-zinc-200'
+                  ? 'bg-[var(--bg-surface)] text-[var(--text-primary)] font-medium border border-[var(--border-hairline)]'
+                  : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] border border-transparent'
               }`}
             >
-              <ListFilter className="w-3 h-3 text-blue-400" />
+              <ListFilter className="w-3 h-3" />
               <span>Paginated</span>
             </button>
           </div>
 
           {/* Search Input */}
           <div className="relative flex-1 sm:w-64">
-            <Search className="w-4 h-4 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <Search className="w-3.5 h-3.5 text-[var(--text-muted)] absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               value={search}
@@ -122,7 +122,7 @@ export const DataTable: React.FC<DataTableProps> = React.memo(({ dataset }) => {
                 setCurrentPage(1);
               }}
               placeholder="Search records..."
-              className="w-full bg-[#18181b] border border-zinc-800 rounded-lg pl-9 pr-3 py-1.5 text-xs text-white placeholder-zinc-400 focus:outline-none focus:border-blue-500 transition-colors"
+              className="w-full bg-[var(--bg-elevated)] border border-[var(--border-hairline)] rounded-lg pl-8.5 pr-3 py-1.5 text-xs text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-blue-500 transition-colors"
             />
           </div>
         </div>
@@ -132,14 +132,14 @@ export const DataTable: React.FC<DataTableProps> = React.memo(({ dataset }) => {
         /* Virtualized Grid View */
         <div
           ref={containerRef}
-          className="relative overflow-auto rounded-lg border border-zinc-800/80 max-h-[460px] bg-[#0c0c0f]"
+          className="relative overflow-auto rounded-lg border border-[var(--border-hairline)] max-h-[480px] bg-[var(--bg-canvas)]"
         >
           {/* Sticky Table Header */}
-          <div className="sticky top-0 z-20 bg-[#141418] border-b border-zinc-800 text-zinc-400 uppercase tracking-wider text-[11px] font-medium flex">
+          <div className="sticky top-0 z-20 bg-[var(--bg-elevated)] border-b border-[var(--border-hairline)] text-[var(--text-muted)] uppercase tracking-wider text-[11px] font-medium flex">
             {dataset.columns.map((col) => (
               <div
                 key={col.name}
-                className="px-4 py-3 flex-1 min-w-[140px] truncate flex items-center gap-1.5"
+                className="px-4 py-2.5 flex-1 min-w-[140px] truncate flex items-center gap-1.5"
               >
                 <TypeIcon type={col.type} />
                 <span className="truncate">{col.name}</span>
@@ -150,7 +150,7 @@ export const DataTable: React.FC<DataTableProps> = React.memo(({ dataset }) => {
           {/* Spacer div establishing total virtual height */}
           <div style={{ height: `${Math.max(120, totalHeight)}px`, position: 'relative' }}>
             {filteredRows.length === 0 ? (
-              <div className="p-8 text-center text-xs text-zinc-400">
+              <div className="p-8 text-center text-xs text-[var(--text-muted)]">
                 No matching records found for "{search}".
               </div>
             ) : (
@@ -169,7 +169,7 @@ export const DataTable: React.FC<DataTableProps> = React.memo(({ dataset }) => {
                   return (
                     <div
                       key={index}
-                      className="flex items-center border-b border-zinc-850 hover:bg-zinc-900/60 transition-colors text-xs"
+                      className="flex items-center border-b border-[var(--border-hairline)] hover:bg-[var(--bg-elevated)]/60 transition-colors text-xs"
                       style={{ height: `${rowHeight}px` }}
                     >
                       {dataset.columns.map((col) => {

@@ -151,33 +151,31 @@ export const TimelineBrush: React.FC<TimelineBrushProps> = ({
   const widthPercent = rightPercent - leftPercent;
 
   return (
-    <div className="mt-4 mb-2 rounded-xl border border-zinc-800/80 bg-zinc-950/50 p-4">
+    <div className="mb-5 rounded-xl border border-[var(--border-hairline)] bg-[var(--bg-surface)] p-4">
       {/* Header */}
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
         <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-md bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center">
-            <Calendar className="w-3 h-3 text-indigo-400" />
-          </div>
-          <span className="text-xs font-semibold text-zinc-300">Timeline Brush</span>
-          <span className="text-[10px] text-zinc-600 font-mono">
+          <Calendar className="w-3.5 h-3.5 text-blue-500" />
+          <span className="text-xs font-medium text-[var(--text-primary)]">Timeline Brush</span>
+          <span className="text-[11px] text-[var(--text-muted)] font-mono tabular-nums">
             {brush.startDate} → {brush.endDate}
           </span>
-          <span className="text-[10px] px-1.5 py-0.5 rounded bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 font-mono">
+          <span className="text-[11px] px-1.5 py-0.5 rounded bg-[var(--bg-elevated)] border border-[var(--border-hairline)] text-[var(--text-secondary)] font-mono tabular-nums">
             {brush.filteredIndices.length.toLocaleString()} rows
           </span>
         </div>
 
         {/* Presets */}
         <div className="flex items-center gap-1">
-          <ZoomIn className="w-3 h-3 text-zinc-600 mr-1" />
+          <ZoomIn className="w-3 h-3 text-[var(--text-muted)] mr-1" />
           {brush.presets.map((preset) => (
             <button
               key={preset.id}
               onClick={() => handlePresetClick(preset.id)}
-              className={`text-[10px] px-2 py-0.5 rounded-md font-mono font-semibold transition-colors ${
+              className={`text-[11px] px-2 py-0.5 rounded-md font-mono font-medium transition-colors ${
                 brush.activePreset === preset.id
-                  ? 'bg-indigo-600 text-white'
-                  : 'bg-zinc-800 text-zinc-500 hover:text-zinc-300'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-[var(--bg-elevated)] text-[var(--text-muted)] hover:text-[var(--text-primary)]'
               }`}
             >
               {preset.label}
@@ -189,7 +187,7 @@ export const TimelineBrush: React.FC<TimelineBrushProps> = ({
       {/* Sparkline + Brush Track */}
       <div
         ref={trackRef}
-        className="relative h-14 bg-zinc-900/50 rounded-lg overflow-hidden cursor-crosshair select-none touch-none"
+        className="relative h-12 bg-[var(--bg-elevated)] rounded-lg overflow-hidden cursor-crosshair select-none touch-none border border-[var(--border-hairline)]"
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onPointerLeave={handlePointerUp}
@@ -204,41 +202,41 @@ export const TimelineBrush: React.FC<TimelineBrushProps> = ({
             <path
               d={sparklinePath}
               fill="none"
-              stroke="rgba(99, 102, 241, 0.3)"
+              stroke="rgba(59, 130, 246, 0.4)"
               strokeWidth="1"
               vectorEffect="non-scaling-stroke"
             />
             <path
               d={sparklinePath + ` L100,100 L0,100 Z`}
-              fill="rgba(99, 102, 241, 0.05)"
+              fill="rgba(59, 130, 246, 0.08)"
             />
           </svg>
         )}
 
         {/* Dimmed regions outside selection */}
         <div
-          className="absolute top-0 bottom-0 left-0 bg-zinc-950/60"
+          className="absolute top-0 bottom-0 left-0 bg-[var(--bg-canvas)]/55"
           style={{ width: `${leftPercent}%` }}
         />
         <div
-          className="absolute top-0 bottom-0 right-0 bg-zinc-950/60"
+          className="absolute top-0 bottom-0 right-0 bg-[var(--bg-canvas)]/55"
           style={{ width: `${100 - rightPercent}%` }}
         />
 
         {/* Selected region */}
         <div
-          className="absolute top-0 bottom-0 border-y border-indigo-500/40 bg-indigo-500/10 cursor-grab active:cursor-grabbing"
+          className="absolute top-0 bottom-0 border-y border-blue-500/40 bg-blue-500/10 cursor-grab active:cursor-grabbing"
           style={{ left: `${leftPercent}%`, width: `${Math.max(widthPercent, 0.5)}%` }}
           onPointerDown={(e) => brush.onPointerDown(e, 'center')}
         >
           {/* Left handle */}
           <div
-            className="absolute left-0 top-0 bottom-0 w-2 bg-indigo-500/60 hover:bg-indigo-400 cursor-ew-resize rounded-l-sm transition-colors"
+            className="absolute left-0 top-0 bottom-0 w-1.5 bg-blue-500/70 hover:bg-blue-400 cursor-ew-resize rounded-l-sm transition-colors"
             onPointerDown={(e) => { e.stopPropagation(); brush.onPointerDown(e, 'left'); }}
           />
           {/* Right handle */}
           <div
-            className="absolute right-0 top-0 bottom-0 w-2 bg-indigo-500/60 hover:bg-indigo-400 cursor-ew-resize rounded-r-sm transition-colors"
+            className="absolute right-0 top-0 bottom-0 w-1.5 bg-blue-500/70 hover:bg-blue-400 cursor-ew-resize rounded-r-sm transition-colors"
             onPointerDown={(e) => { e.stopPropagation(); brush.onPointerDown(e, 'right'); }}
           />
         </div>
@@ -246,11 +244,11 @@ export const TimelineBrush: React.FC<TimelineBrushProps> = ({
 
       {/* Axis Labels */}
       <div className="flex justify-between mt-1.5">
-        <span className="text-[9px] text-zinc-600 font-mono">{brush.dateLabels[0]}</span>
-        <span className="text-[9px] text-zinc-600 font-mono">
+        <span className="text-[10px] text-[var(--text-muted)] font-mono">{brush.dateLabels[0]}</span>
+        <span className="text-[10px] text-[var(--text-muted)] font-mono">
           {brush.dateLabels[Math.floor(totalLen / 2)]}
         </span>
-        <span className="text-[9px] text-zinc-600 font-mono">{brush.dateLabels[totalLen - 1]}</span>
+        <span className="text-[10px] text-[var(--text-muted)] font-mono">{brush.dateLabels[totalLen - 1]}</span>
       </div>
     </div>
   );

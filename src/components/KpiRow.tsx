@@ -9,27 +9,27 @@ interface KpiRowProps {
 
 export const KpiRow: React.FC<KpiRowProps> = React.memo(({ cards }) => {
   return (
-    <div data-export-kpis="true" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+    <div data-export-kpis="true" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
       {cards.map((card, idx) => (
         <motion.div
           key={card.id}
-          initial={{ opacity: 0, y: 15 }}
+          initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ type: 'spring', stiffness: 350, damping: 25, delay: idx * 0.05 }}
+          transition={{ duration: 0.16, delay: idx * 0.03, ease: 'easeOut' }}
           className="spotlight-card rounded-xl p-5 flex flex-col justify-between"
         >
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-medium text-zinc-400 uppercase tracking-wider">
+          <div className="flex items-center justify-between gap-2 mb-2.5">
+            <span className="text-[11px] font-medium text-[var(--text-muted)] uppercase tracking-wider truncate">
               {card.title}
             </span>
             {card.change !== undefined && (
               <span
-                className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full ${
+                className={`inline-flex items-center gap-1 text-[11px] font-mono font-medium px-1.5 py-0.5 rounded-md tabular-nums shrink-0 ${
                   card.trend === 'up'
-                    ? 'text-emerald-400 bg-emerald-500/10'
+                    ? 'text-emerald-500 bg-emerald-500/10'
                     : card.trend === 'down'
-                    ? 'text-rose-400 bg-rose-500/10'
-                    : 'text-zinc-400 bg-zinc-800'
+                    ? 'text-rose-500 bg-rose-500/10'
+                    : 'text-[var(--text-muted)] bg-[var(--bg-elevated)]'
                 }`}
               >
                 {card.trend === 'up' ? (
@@ -44,14 +44,14 @@ export const KpiRow: React.FC<KpiRowProps> = React.memo(({ cards }) => {
             )}
           </div>
 
-          <div className="my-1">
-            <span className="text-2xl sm:text-3xl font-bold text-white tracking-tight font-mono tabular-nums">
+          <div className="my-0.5">
+            <span className="text-2xl sm:text-[28px] font-semibold text-[var(--text-primary)] tracking-tight font-mono tabular-nums">
               {card.value}
             </span>
           </div>
 
           {card.subtitle && (
-            <p className="text-xs text-zinc-400 mt-2 truncate">
+            <p className="text-xs text-[var(--text-muted)] mt-2 truncate">
               {card.subtitle}
             </p>
           )}
