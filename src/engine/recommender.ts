@@ -177,7 +177,10 @@ export function buildChartRecommendations(schema: DatasetSchema): ChartRecommend
 
   // 2. Category Comparison (Category + Numeric Bar Chart)
   if (categoryCols.length > 0 && primaryNumeric) {
-    const catCol = categoryCols[0].name;
+    const preferredBarCol =
+      categoryCols.find((c) => /category|type|group|segment|department|region|tier/i.test(c.name)) ||
+      categoryCols[0];
+    const catCol = preferredBarCol.name;
     const numCol = primaryNumeric.name;
     const barData = aggregateChartData(rows, catCol, numCol, 'bar', schema.columns);
 
@@ -193,7 +196,10 @@ export function buildChartRecommendations(schema: DatasetSchema): ChartRecommend
   }
 
   // 3. Proportional Share (Donut / Pie Chart for low-cardinality category)
-  const donutCategory = categoryCols.find((c) => c.uniqueCount >= 2 && c.uniqueCount <= 6) || categoryCols[1];
+  const donutCategory =
+    categoryCols.find((c) => c.uniqueCount >= 2 && c.uniqueCount <= 6 && /category|type|status|group|segment|tier|department|region/i.test(c.name)) ||
+    categoryCols.find((c) => c.uniqueCount >= 2 && c.uniqueCount <= 6) ||
+    categoryCols[1];
   if (donutCategory && primaryNumeric) {
     const catCol = donutCategory.name;
     const numCol = primaryNumeric.name;
@@ -264,22 +270,31 @@ export function buildChartRecommendations(schema: DatasetSchema): ChartRecommend
     }
   }
 
-  // 6. Sequential Index Fallback (for purely numeric datasets without categories or dates)
-  if (categoryCols.length === 0 && dateCols.length === 0 && primaryNumeric) {
+  // 6. Sequential Index Fallback (for datasets without dates — always provide an area chart)
+  if (dateCols.length === 0 && primaryNumeric) {
     const numCol = primaryNumeric.name;
     const indexedData = rows.slice(0, 40).map((r, i) => ({
       index: `#${i + 1}`,
-      [numCol]: Number(r[numCol]) || 0,
+      [numCol]: parseNumberValue(r[numCol]) ?? 0,
     }));
-    recommendations.push({
-      id: 'chart-numeric-sequence',
-      type: 'area',
-      title: `${numCol} across Records`,
-      description: `Sequential progression of ${numCol} across data rows.`,
-      xAxis: 'index',
-      yAxis: numCol,
-      data: indexedData,
-    });
+    if (indexedData.length > 1) {
+      recommendations.push({
+        id: 'chart-numeric-sequence',
+        type: 'area',
+        title: `${numCol} across Records`,
+        description: `Sequential progression of ${numCol} across data rows.`,
+        xAxis: 'index',
+        yAxis: numCol,
+        data: indexedData,
+      });
+    }
+  }
+
+  // ── Ensure area/line chart is always first ──
+  const areaIdx = recommendations.findIndex((c) => c.type === 'area' || c.type === 'line');
+  if (areaIdx > 0) {
+    const [areaChart] = recommendations.splice(areaIdx, 1);
+    recommendations.unshift(areaChart);
   }
 
   return recommendations;

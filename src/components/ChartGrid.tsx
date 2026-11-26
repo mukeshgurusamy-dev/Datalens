@@ -188,6 +188,7 @@ const ChartCardItem: React.FC<ChartCardItemProps> = React.memo(({
                   strokeWidth={2.5}
                   fillOpacity={chart.type === 'line' ? 0 : 1}
                   fill={`url(#gradient-${chart.id})`}
+                  isAnimationActive={false}
                 />
 
                 {/* 95% Confidence Upper Band */}
@@ -239,6 +240,7 @@ const ChartCardItem: React.FC<ChartCardItemProps> = React.memo(({
                   dataKey={chart.yAxis}
                   fill="#3b82f6"
                   radius={[6, 6, 0, 0]}
+                  isAnimationActive={false}
                   className="cursor-pointer transition-opacity"
                   onClick={(entry: any) => {
                     const rawVal = entry && (entry[chart.xAxis] || entry.payload?.[chart.xAxis]);
@@ -273,6 +275,7 @@ const ChartCardItem: React.FC<ChartCardItemProps> = React.memo(({
                   innerRadius={65}
                   outerRadius={95}
                   paddingAngle={3}
+                  isAnimationActive={false}
                   className="cursor-pointer"
                   onClick={(entry: any) => {
                     const rawVal = entry && (entry[chart.xAxis] || entry.payload?.[chart.xAxis] || entry.name);
@@ -321,6 +324,7 @@ const ChartCardItem: React.FC<ChartCardItemProps> = React.memo(({
                   name={`${chart.xAxis} vs ${chart.yAxis}`}
                   data={activeData}
                   fill="#3b82f6"
+                  isAnimationActive={false}
                 />
               </ScatterChart>
             )}
