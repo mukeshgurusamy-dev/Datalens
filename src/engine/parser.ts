@@ -1,10 +1,24 @@
 import Papa from 'papaparse';
-import * as XLSX from 'xlsx';
+import { readSheet } from 'read-excel-file/browser';
+import {
+  FILE_LIMITS,
+  isSafeObjectKey,
+  sanitizePlainObject,
+} from './security';
+
+function assertFileSize(file: File) {
+  if (file.size > FILE_LIMITS.MAX_FILE_BYTES) {
+    throw new Error(
+      `File exceeds maximum allowed size (${Math.round(FILE_LIMITS.MAX_FILE_BYTES / (1024 * 1024))} MB).`
+    );
+  }
+}
 
 /**
- * Parses a CSV file using PapaParse.
+ * Parses a CSV file using PapaParse with size limits and prototype-pollution sanitization.
  */
 export function parseCSV(file: File): Promise<Record<string, any>[]> {
+  assertFileSize(file);
   return new Promise((resolve, reject) => {
     Papa.parse(file, {
       header: true,
@@ -14,7 +28,7 @@ export function parseCSV(file: File): Promise<Record<string, any>[]> {
         if (results.errors.length > 0 && results.data.length === 0) {
           reject(new Error(results.errors[0].message));
         } else {
-          resolve(results.data as Record<string, any>[]);
+          resolve(sanitizePlainObject<Record<string, any>[]>(results.data));
         }
       },
       error: (err) => reject(err),
@@ -23,39 +37,69 @@ export function parseCSV(file: File): Promise<Record<string, any>[]> {
 }
 
 /**
- * Parses an Excel (.xlsx / .xls) file using SheetJS.
- * Automatically picks the first active sheet.
+ * Parses an Excel (.xlsx) file using read-excel-file (zero-CVE browser parser).
+ * Automatically picks the first active sheet and maps header row to sanitized objects.
  */
 export async function parseExcel(file: File): Promise<Record<string, any>[]> {
-  const buffer = await file.arrayBuffer();
-  const workbook = XLSX.read(buffer, { type: 'array', cellDates: true });
-  const firstSheetName = workbook.SheetNames[0];
-
-  if (!firstSheetName) {
-    throw new Error('Excel workbook contains no sheets.');
+  assertFileSize(file);
+  const ext = file.name.split('.').pop()?.toLowerCase();
+  if (ext === 'xls') {
+    throw new Error('Legacy binary .xls files are not supported for security reasons. Please save as .xlsx or .csv.');
   }
 
-  const sheet = workbook.Sheets[firstSheetName];
-  const jsonData = XLSX.utils.sheet_to_json(sheet) as Record<string, any>[];
-  return jsonData;
+  const rows = await readSheet(file);
+  if (!rows || rows.length < 2) {
+    throw new Error('Excel workbook contains no data rows.');
+  }
+
+  const rawHeaders = rows[0].map((cell, idx) => {
+    const label = cell !== null && cell !== undefined ? String(cell).trim() : '';
+    return label || `column_${idx + 1}`;
+  });
+
+  const records: Record<string, any>[] = [];
+  for (let r = 1; r < rows.length; r++) {
+    const row = rows[r];
+    if (!row || row.every((cell) => cell === null || cell === undefined || cell === '')) {
+      continue;
+    }
+    const obj: Record<string, any> = {};
+    for (let c = 0; c < rawHeaders.length; c++) {
+      const header = rawHeaders[c];
+      if (!isSafeObjectKey(header)) continue;
+      const val = row[c];
+      obj[header] = val instanceof Date ? val.toISOString().slice(0, 10) : (val ?? null);
+    }
+    records.push(obj);
+  }
+
+  if (records.length === 0) {
+    throw new Error('Excel workbook contains no data rows.');
+  }
+
+  return records;
 }
 
 /**
- * Parses raw JSON text. Automatically extracts nested records if wrapped in an object.
+ * Parses raw JSON text with size limits and prototype-pollution sanitization.
  */
 export function parseJSON(content: string): Record<string, any>[] {
-  const parsed = JSON.parse(content);
+  if (content.length > FILE_LIMITS.MAX_FILE_BYTES) {
+    throw new Error(
+      `JSON payload exceeds maximum allowed size (${Math.round(FILE_LIMITS.MAX_FILE_BYTES / (1024 * 1024))} MB).`
+    );
+  }
+
+  const parsed = sanitizePlainObject<any>(JSON.parse(content));
   if (Array.isArray(parsed)) {
     return parsed;
   }
   if (parsed && typeof parsed === 'object') {
-    // Look for common array wrappers like { data: [...] } or { items: [...] } or { rows: [...] }
     for (const key of ['data', 'items', 'rows', 'records', 'results']) {
       if (Array.isArray(parsed[key])) {
         return parsed[key];
       }
     }
-    // Otherwise wrap single object
     return [parsed];
   }
   throw new Error('Invalid JSON format: Expected an array of records.');
@@ -65,10 +109,13 @@ export function parseJSON(content: string): Record<string, any>[] {
  * Parses tab-separated spreadsheet clipboard data (from Ctrl+V in Excel/Google Sheets).
  */
 export function parseClipboardSpreadsheet(text: string): Record<string, any>[] {
+  if (text.length > FILE_LIMITS.MAX_CLIPBOARD_BYTES) {
+    throw new Error('Clipboard data exceeds maximum allowed size (10 MB).');
+  }
+
   const trimmed = text.trim();
   if (!trimmed) return [];
 
-  // Use PapaParse with tab delimiter autodetection
   const result = Papa.parse(trimmed, {
     header: true,
     delimiter: '\t',
@@ -77,15 +124,14 @@ export function parseClipboardSpreadsheet(text: string): Record<string, any>[] {
   });
 
   if (result.data.length > 0) {
-    return result.data as Record<string, any>[];
+    return sanitizePlainObject<Record<string, any>[]>(result.data);
   }
 
-  // Fallback to comma delimiter if tab wasn't detected
   const commaResult = Papa.parse(trimmed, {
     header: true,
     skipEmptyLines: true,
     dynamicTyping: true,
   });
 
-  return commaResult.data as Record<string, any>[];
+  return sanitizePlainObject<Record<string, any>[]>(commaResult.data);
 }

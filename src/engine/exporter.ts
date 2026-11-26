@@ -14,8 +14,9 @@
 
 import { toPng } from 'html-to-image';
 import { jsPDF } from 'jspdf';
-import * as XLSX from 'xlsx';
+import writeXlsxFile, { type Sheet, type SheetData } from 'write-excel-file/browser';
 import { cleanSlug } from './unslug';
+import { neutralizeSpreadsheetFormula } from './security';
 import { computeCorrelationMatrix } from './worker-tasks';
 import type {
   ChartRecommendation,
@@ -663,42 +664,60 @@ export async function exportFlexiblePdf(input: FlexibleReportInput): Promise<voi
 
 // ── 2. Multi-Sheet Excel Workbook (.xlsx) ─────────────────────────────
 
-export function exportDatasetAsExcel(
+function toExcelCell(val: unknown) {
+  if (val === null || val === undefined) return { value: '' };
+  if (typeof val === 'number' && Number.isFinite(val)) return { type: Number, value: val };
+  if (typeof val === 'boolean') return { type: Boolean, value: val };
+  return { type: String, value: neutralizeSpreadsheetFormula(val) };
+}
+
+export async function exportDatasetAsExcel(
   dataset: DatasetSchema,
   kpis: KpiCard[] = [],
   strongestPairs: { colA: string; colB: string; coefficient: number }[] = []
-): void {
-  const wb = XLSX.utils.book_new();
-
-  const summaryData = [
-    ['Executive Summary', dataset.name],
-    ['Total Records', dataset.rowCount],
-    ['Total Columns', dataset.columnCount],
-    ['Exported At', new Date().toISOString()],
+): Promise<void> {
+  const summaryData: SheetData = [
+    [toExcelCell('Executive Summary'), toExcelCell(dataset.name)],
+    [toExcelCell('Total Records'), toExcelCell(dataset.rowCount)],
+    [toExcelCell('Total Columns'), toExcelCell(dataset.columnCount)],
+    [toExcelCell('Exported At'), toExcelCell(new Date().toISOString())],
     [],
-    ['KPI Metric', 'Value', 'Subtitle'],
-    ...kpis.map((k) => [k.title, k.value, k.subtitle || '']),
+    [toExcelCell('KPI Metric'), toExcelCell('Value'), toExcelCell('Subtitle')],
+    ...kpis.map((k) => [
+      toExcelCell(k.title),
+      toExcelCell(k.value),
+      toExcelCell(k.subtitle || ''),
+    ]),
   ];
-  const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
-  XLSX.utils.book_append_sheet(wb, summarySheet, 'Executive Summary');
 
-  const recordsSheet = XLSX.utils.json_to_sheet(dataset.rows);
-  XLSX.utils.book_append_sheet(wb, recordsSheet, 'Records');
+  const headers = dataset.columns.map((c) => c.name);
+  const recordsData: SheetData = [
+    headers.map((h) => toExcelCell(h)),
+    ...dataset.rows.map((row) => headers.map((h) => toExcelCell(row[h]))),
+  ];
+
+  const sheets: Sheet<Blob>[] = [
+    { sheet: 'Executive Summary', data: summaryData },
+    { sheet: 'Records', data: recordsData },
+  ];
 
   if (strongestPairs.length > 0) {
-    const correlationData = [
-      ['Dimension A', 'Dimension B', 'Pearson r Coefficient'],
-      ...strongestPairs.map((p) => [p.colA, p.colB, p.coefficient]),
+    const corrData: SheetData = [
+      [toExcelCell('Dimension A'), toExcelCell('Dimension B'), toExcelCell('Pearson r Coefficient')],
+      ...strongestPairs.map((p) => [
+        toExcelCell(p.colA),
+        toExcelCell(p.colB),
+        toExcelCell(p.coefficient),
+      ]),
     ];
-    const corrSheet = XLSX.utils.aoa_to_sheet(correlationData);
-    XLSX.utils.book_append_sheet(wb, corrSheet, 'Correlations');
+    sheets.push({ sheet: 'Correlations', data: corrData });
   }
 
   const slug = cleanSlug(dataset.name);
-  XLSX.writeFile(wb, `${slug}-analytics-workbook.xlsx`);
+  await writeXlsxFile(sheets).toFile(`${slug}-analytics-workbook.xlsx`);
 }
 
-// ── 3. RFC-4180 Cleaned CSV Export ─────────────────────────────────────
+// ── 3. RFC-4180 Cleaned CSV Export (with CWE-1236 Formula Neutralization) ─
 
 export function exportRowsAsCsv(
   rows: Record<string, any>[],
@@ -709,8 +728,7 @@ export function exportRowsAsCsv(
   const headers = Object.keys(rows[0]);
 
   const escapeCell = (val: any): string => {
-    if (val === null || val === undefined) return '';
-    const str = String(val);
+    const str = neutralizeSpreadsheetFormula(val);
     if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
       return `"${str.replace(/"/g, '""')}"`;
     }

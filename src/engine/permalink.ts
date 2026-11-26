@@ -1,6 +1,12 @@
 import type { ColumnProfile, DataFilterState, DatasetSchema } from '../types/dataset';
 import { cleanSlug } from './unslug';
 import Papa from 'papaparse';
+import {
+  FILE_LIMITS,
+  fetchTextWithLimits,
+  sanitizePlainObject,
+  validateExternalDatasetUrl,
+} from './security';
 
 export interface SharedDashboardPayload {
   v: number; // schema version
@@ -57,6 +63,8 @@ export function encodeDashboardState(
 export function decodeDashboardState(encoded: string): SharedDashboardPayload | null {
   try {
     if (!encoded || encoded.trim().length === 0) return null;
+    if (encoded.length > FILE_LIMITS.MAX_SHARE_PAYLOAD_BYTES) return null;
+
     let b64 = encoded.replace(/-/g, '+').replace(/_/g, '/');
     while (b64.length % 4 !== 0) {
       b64 += '=';
@@ -67,9 +75,15 @@ export function decodeDashboardState(encoded: string): SharedDashboardPayload | 
       bytes[i] = binary.charCodeAt(i);
     }
     const json = new TextDecoder().decode(bytes);
-    const parsed = JSON.parse(json) as SharedDashboardPayload;
+    const parsed = sanitizePlainObject<SharedDashboardPayload>(JSON.parse(json));
 
-    if (!parsed || parsed.v !== 1 || !Array.isArray(parsed.columns)) {
+    if (
+      !parsed ||
+      parsed.v !== 1 ||
+      typeof parsed.name !== 'string' ||
+      !Array.isArray(parsed.columns) ||
+      !Array.isArray(parsed.sampleRows)
+    ) {
       return null;
     }
     return parsed;
@@ -100,6 +114,7 @@ export function reconstructDatasetFromPayload(payload: SharedDashboardPayload): 
  */
 export async function fetchExternalCsv(rawUrl: string, proxyBaseUrl?: string): Promise<Record<string, any>[]> {
   let targetUrl = rawUrl.trim();
+  validateExternalDatasetUrl(targetUrl);
 
   // Handle Google Sheets sharing link: convert to /export?format=csv, preserving sheet gid if present
   if (targetUrl.includes('docs.google.com/spreadsheets')) {
@@ -112,17 +127,13 @@ export async function fetchExternalCsv(rawUrl: string, proxyBaseUrl?: string): P
     }
   }
 
-  // Use Cloudflare proxy if provided, otherwise fetch directly
-  const fetchUrl = proxyBaseUrl
-    ? `${proxyBaseUrl}/api/proxy?url=${encodeURIComponent(targetUrl)}`
-    : targetUrl;
-
-  const response = await fetch(fetchUrl);
-  if (!response.ok) {
-    throw new Error(`Failed to fetch external dataset (HTTP ${response.status})`);
+  let fetchUrl = targetUrl;
+  if (proxyBaseUrl) {
+    validateExternalDatasetUrl(proxyBaseUrl);
+    fetchUrl = `${proxyBaseUrl.replace(/\/+$/, '')}/api/proxy?url=${encodeURIComponent(targetUrl)}`;
   }
 
-  const csvText = await response.text();
+  const csvText = await fetchTextWithLimits(fetchUrl);
   const parsed = Papa.parse(csvText, {
     header: true,
     dynamicTyping: true,
@@ -133,5 +144,5 @@ export async function fetchExternalCsv(rawUrl: string, proxyBaseUrl?: string): P
     throw new Error(`CSV Parsing error: ${parsed.errors[0].message}`);
   }
 
-  return parsed.data as Record<string, any>[];
+  return sanitizePlainObject<Record<string, any>[]>(parsed.data);
 }

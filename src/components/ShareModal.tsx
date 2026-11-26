@@ -170,7 +170,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
             <a
               href={shareUrl}
               target="_blank"
-              rel="noreferrer"
+              rel="noopener noreferrer"
               className="inline-flex items-center gap-1 text-blue-400 hover:text-blue-300 font-medium"
             >
               <span>Test Link</span>

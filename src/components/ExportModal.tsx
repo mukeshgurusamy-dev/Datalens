@@ -137,7 +137,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
     }
   };
 
-  const handleExportExcel = () => {
+  const handleExportExcel = async () => {
     setIsExporting(true);
     setError(null);
     setExportSuccess(null);
@@ -148,7 +148,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
         numericCols.length >= 2
           ? computeCorrelationMatrix(dataset.rows, numericCols).strongestPairs
           : [];
-      exportDatasetAsExcel(dataset, kpis, pairs);
+      await exportDatasetAsExcel(dataset, kpis, pairs);
       setExportSuccess('Excel workbook (.xlsx) downloaded.');
     } catch (err: any) {
       setError(err.message || 'Failed to generate Excel workbook.');

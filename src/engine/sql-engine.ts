@@ -334,7 +334,9 @@ function evaluateWhereConditions(row: Record<string, any>, conditions: ParsedWhe
         if (Number(cellVal) > Number(cond.value)) return false;
         break;
       case 'LIKE': {
-        const escaped = String(cond.value)
+        // Collapse consecutive % and cap pattern length to prevent ReDoS
+        const normalized = String(cond.value).slice(0, 128).replace(/%+/g, '%');
+        const escaped = normalized
           .replace(/[-[\]{}()+?.,\\^$|#\s]/g, '\\$&')
           .replace(/%/g, '.*')
           .replace(/_/g, '.');

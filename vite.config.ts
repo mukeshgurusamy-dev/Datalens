@@ -15,7 +15,7 @@ export default defineConfig({
           if (id.includes('node_modules')) {
             if (id.includes('recharts') || id.includes('d3-')) return 'vendor-charts'
             if (id.includes('jspdf') || id.includes('html2canvas') || id.includes('html-to-image')) return 'vendor-export-pdf'
-            if (id.includes('xlsx')) return 'vendor-export-xlsx'
+            if (id.includes('write-excel-file') || id.includes('read-excel-file')) return 'vendor-export-xlsx'
             if (id.includes('motion')) return 'vendor-motion'
             if (id.includes('papaparse')) return 'vendor-parser'
           }
