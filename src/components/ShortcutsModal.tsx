@@ -64,6 +64,9 @@ export const ShortcutsModal: React.FC<ShortcutsModalProps> = ({ isOpen, onClose 
         onClick={onClose}
       >
         <motion.div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="shortcuts-modal-title"
           initial={{ opacity: 0, scale: 0.95, y: 10 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 10 }}
@@ -78,7 +81,7 @@ export const ShortcutsModal: React.FC<ShortcutsModalProps> = ({ isOpen, onClose 
                 <Keyboard className="w-4 h-4" />
               </div>
               <div>
-                <h3 className="text-sm font-semibold text-white tracking-tight">
+                <h3 id="shortcuts-modal-title" className="text-sm font-semibold text-white tracking-tight">
                   Keyboard Shortcuts
                 </h3>
                 <p className="text-[11px] text-zinc-400">Power-user accelerators for DataLens Engine</p>
@@ -86,6 +89,7 @@ export const ShortcutsModal: React.FC<ShortcutsModalProps> = ({ isOpen, onClose 
             </div>
             <button
               onClick={onClose}
+              aria-label="Close modal"
               className="p-1 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
             >
               <X className="w-4 h-4" />

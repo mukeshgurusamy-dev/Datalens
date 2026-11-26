@@ -11,7 +11,7 @@ interface FilterBarProps {
   filteredRowCount: number;
 }
 
-export const FilterBar: React.FC<FilterBarProps> = ({
+export const FilterBar: React.FC<FilterBarProps> = React.memo(({
   columns,
   filters,
   onFilterChange,
@@ -275,4 +275,4 @@ export const FilterBar: React.FC<FilterBarProps> = ({
       )}
     </div>
   );
-};
+});

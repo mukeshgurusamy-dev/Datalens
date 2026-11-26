@@ -61,7 +61,7 @@ interface ChartCardItemProps {
   activeFilters?: Record<string, string[]>;
 }
 
-const ChartCardItem: React.FC<ChartCardItemProps> = ({
+const ChartCardItem: React.FC<ChartCardItemProps> = React.memo(({
   chart,
   idx,
   onCustomize,
@@ -328,9 +328,9 @@ const ChartCardItem: React.FC<ChartCardItemProps> = ({
       </div>
     </motion.div>
   );
-};
+});
 
-export const ChartGrid: React.FC<ChartGridProps> = ({
+export const ChartGrid: React.FC<ChartGridProps> = React.memo(({
   charts,
   onCustomizeChart,
   onCrossFilter,
@@ -364,4 +364,4 @@ export const ChartGrid: React.FC<ChartGridProps> = ({
       ))}
     </div>
   );
-};
+});

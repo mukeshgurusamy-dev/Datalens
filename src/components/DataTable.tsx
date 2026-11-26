@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useDeferredValue } from 'react';
 import { Search, ChevronLeft, ChevronRight, Hash, Calendar, Tag, Type, Key, Cpu, ListFilter } from 'lucide-react';
 import type { DatasetSchema, ColumnType } from '../types/dataset';
 import { useVirtualGrid } from '../hooks/useVirtualGrid';
@@ -22,23 +22,24 @@ const TypeIcon: React.FC<{ type: ColumnType }> = ({ type }) => {
   }
 };
 
-export const DataTable: React.FC<DataTableProps> = ({ dataset }) => {
+export const DataTable: React.FC<DataTableProps> = React.memo(({ dataset }) => {
   const [search, setSearch] = useState('');
+  const deferredSearch = useDeferredValue(search);
   const [currentPage, setCurrentPage] = useState(1);
   const [viewMode, setViewMode] = useState<'virtual' | 'paginated'>('virtual');
   const rowsPerPage = 10;
   const rowHeight = 38;
 
-  // Filter rows across all columns based on search query
+  // Filter rows across all columns based on deferred search query (keeps typing at 60 FPS)
   const filteredRows = useMemo(() => {
-    if (!search.trim()) return dataset.rows;
-    const query = search.toLowerCase();
+    if (!deferredSearch.trim()) return dataset.rows;
+    const query = deferredSearch.toLowerCase();
     return dataset.rows.filter((row) =>
       Object.values(row).some((val) =>
         String(val ?? '').toLowerCase().includes(query)
       )
     );
-  }, [dataset.rows, search]);
+  }, [dataset.rows, deferredSearch]);
 
   const totalPages = Math.max(1, Math.ceil(filteredRows.length / rowsPerPage));
   const safeCurrentPage = Math.min(currentPage, totalPages);
@@ -283,4 +284,4 @@ export const DataTable: React.FC<DataTableProps> = ({ dataset }) => {
       )}
     </div>
   );
-};
+});

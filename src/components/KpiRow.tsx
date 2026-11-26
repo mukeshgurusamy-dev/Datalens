@@ -7,7 +7,7 @@ interface KpiRowProps {
   cards: KpiCard[];
 }
 
-export const KpiRow: React.FC<KpiRowProps> = ({ cards }) => {
+export const KpiRow: React.FC<KpiRowProps> = React.memo(({ cards }) => {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
       {cards.map((card, idx) => (
@@ -59,4 +59,4 @@ export const KpiRow: React.FC<KpiRowProps> = ({ cards }) => {
       ))}
     </div>
   );
-};
+});

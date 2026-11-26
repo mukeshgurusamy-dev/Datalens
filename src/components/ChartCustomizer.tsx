@@ -2,6 +2,7 @@ import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Sliders, Check } from 'lucide-react';
 import type { ChartRecommendation, ChartType, ColumnProfile } from '../types/dataset';
+import { useModalAccessibility } from '../hooks/useModalAccessibility';
 
 interface ChartCustomizerProps {
   chart: ChartRecommendation | null;
@@ -23,6 +24,7 @@ export const ChartCustomizer: React.FC<ChartCustomizerProps> = ({
   onClose,
   onUpdateChart,
 }) => {
+  const dialogRef = useModalAccessibility(Boolean(chart), onClose);
   if (!chart) return null;
 
   const numericCols = columns.filter((c) => c.type === 'number');
@@ -67,24 +69,30 @@ export const ChartCustomizer: React.FC<ChartCustomizerProps> = ({
     <AnimatePresence>
       <div className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-xs" onClick={onClose}>
         <motion.div
+          ref={dialogRef}
+          tabIndex={-1}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="chart-customizer-title"
           initial={{ x: '100%' }}
           animate={{ x: 0 }}
           exit={{ x: '100%' }}
           transition={{ type: 'spring', stiffness: 350, damping: 30 }}
           onClick={(e) => e.stopPropagation()}
-          className="w-full max-w-md bg-[#121215] border-l border-zinc-800 p-6 flex flex-col justify-between shadow-2xl h-full overflow-y-auto"
+          className="w-full max-w-md bg-[#121215] border-l border-zinc-800 p-6 flex flex-col justify-between shadow-2xl h-full overflow-y-auto focus:outline-none"
         >
           {/* Header */}
           <div>
             <div className="flex items-center justify-between pb-4 border-b border-zinc-800">
               <div className="flex items-center gap-2">
                 <Sliders className="w-4 h-4 text-blue-400" />
-                <h3 className="text-base font-semibold text-white tracking-tight">
+                <h3 id="chart-customizer-title" className="text-base font-semibold text-white tracking-tight">
                   Customize Visualization
                 </h3>
               </div>
               <button
                 onClick={onClose}
+                aria-label="Close modal"
                 className="p-1 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
               >
                 <X className="w-5 h-5" />

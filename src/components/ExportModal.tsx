@@ -43,6 +43,7 @@ import {
   type ReportCustomization,
 } from '../engine/exporter';
 import type { DatasetSchema, KpiCard } from '../types/dataset';
+import { useModalAccessibility } from '../hooks/useModalAccessibility';
 
 interface ExportModalProps {
   isOpen: boolean;
@@ -63,6 +64,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
   const [isExporting, setIsExporting] = useState(false);
   const [exportSuccess, setExportSuccess] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const dialogRef = useModalAccessibility(isOpen, onClose);
   const [copiedMarkdown, setCopiedMarkdown] = useState(false);
 
   // PDF Dossier Customization State
@@ -174,13 +176,22 @@ export const ExportModal: React.FC<ExportModalProps> = ({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-md">
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-md"
+        onClick={onClose}
+      >
         <motion.div
+          ref={dialogRef}
+          tabIndex={-1}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="export-modal-title"
           initial={{ opacity: 0, scale: 0.95, y: 10 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 10 }}
           transition={{ type: 'spring', stiffness: 350, damping: 25 }}
-          className="w-full max-w-2xl bg-[#0f0f13] border border-zinc-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+          onClick={(e) => e.stopPropagation()}
+          className="w-full max-w-2xl bg-[#0f0f13] border border-zinc-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] focus:outline-none"
         >
           {/* Header */}
           <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-800 bg-[#14141a]/90">
@@ -190,7 +201,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <h3 className="text-sm font-semibold text-white tracking-tight">
+                  <h3 id="export-modal-title" className="text-sm font-semibold text-white tracking-tight">
                     Executive Export Hub
                   </h3>
                   <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 font-medium">
@@ -206,6 +217,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
             <button
               onClick={onClose}
               disabled={isExporting}
+              aria-label="Close modal"
               className="text-zinc-400 hover:text-white p-1.5 rounded-lg hover:bg-zinc-800 transition-colors disabled:opacity-50"
             >
               <X className="w-4 h-4" />

@@ -1,326 +1,130 @@
-import { useState, useMemo, useEffect, useTransition, Profiler, type ProfilerOnRenderCallback } from 'react';
+import { useState, useCallback, lazy, Suspense, Profiler, type ProfilerOnRenderCallback } from 'react';
 import { Header } from './components/Header';
 import { Dropzone } from './components/Dropzone';
 import { FilterBar } from './components/FilterBar';
 import { KpiRow } from './components/KpiRow';
 import { ChartGrid } from './components/ChartGrid';
-import { ChartCustomizer } from './components/ChartCustomizer';
-import { ExportModal } from './components/ExportModal';
-import { ShareModal } from './components/ShareModal';
 import { DataTable } from './components/DataTable';
-import { PerformanceHud } from './components/PerformanceHud';
 import { TimeTravelDrawer } from './components/TimeTravelDrawer';
 import { CardErrorBoundary } from './components/CardErrorBoundary';
-import { SqlStudioModal } from './components/SqlStudioModal';
-import { ScenarioSimulator } from './components/ScenarioSimulator';
-import { FormulaStudioModal } from './components/FormulaStudioModal';
 import { TimelineBrush } from './components/TimelineBrush';
-import { CorrelationMatrix } from './components/CorrelationMatrix';
-import { ShortcutsModal } from './components/ShortcutsModal';
-import { buildChartRecommendations, aggregateChartData } from './engine/recommender';
-import { filterRows } from './engine/filter';
-import { deriveFilteredSchema, computeNumericStats } from './engine/profiler';
-import { decodeDashboardState, reconstructDatasetFromPayload } from './engine/permalink';
-import { buildPersonaKpiCards, type ExecutiveLens } from './engine/personas';
+import { useDashboardState } from './hooks/useDashboardState';
 import { telemetryStore } from './engine/telemetry-store';
-import { historyStore, type DashboardSnapshot } from './engine/history-store';
-import type { DatasetSchema, DataFilterState, ChartRecommendation } from './types/dataset';
 import { Layers, RefreshCw } from 'lucide-react';
 
+// Lazy-loaded modals and secondary analytical panels to keep initial bundle lean
+const ChartCustomizer = lazy(() =>
+  import('./components/ChartCustomizer').then((m) => ({ default: m.ChartCustomizer }))
+);
+const ExportModal = lazy(() =>
+  import('./components/ExportModal').then((m) => ({ default: m.ExportModal }))
+);
+const ShareModal = lazy(() =>
+  import('./components/ShareModal').then((m) => ({ default: m.ShareModal }))
+);
+const SqlStudioModal = lazy(() =>
+  import('./components/SqlStudioModal').then((m) => ({ default: m.SqlStudioModal }))
+);
+const FormulaStudioModal = lazy(() =>
+  import('./components/FormulaStudioModal').then((m) => ({ default: m.FormulaStudioModal }))
+);
+const ShortcutsModal = lazy(() =>
+  import('./components/ShortcutsModal').then((m) => ({ default: m.ShortcutsModal }))
+);
+const PerformanceHud = lazy(() =>
+  import('./components/PerformanceHud').then((m) => ({ default: m.PerformanceHud }))
+);
+const ScenarioSimulator = lazy(() =>
+  import('./components/ScenarioSimulator').then((m) => ({ default: m.ScenarioSimulator }))
+);
+const CorrelationMatrix = lazy(() =>
+  import('./components/CorrelationMatrix').then((m) => ({ default: m.CorrelationMatrix }))
+);
+
 export function App() {
-  const [dataset, setDataset] = useState<DatasetSchema | null>(null);
-  const [customCharts, setCustomCharts] = useState<Record<string, ChartRecommendation>>({});
-  const [editingChart, setEditingChart] = useState<ChartRecommendation | null>(null);
+  const {
+    dataset,
+    activeDataset,
+    dateColumnName,
+    filteredRows,
+    filters,
+    kpis,
+    charts,
+    customCharts,
+    activeEditingChart,
+    persona,
+    isPending,
+    setEditingChart,
+    handleDatasetLoaded,
+    handleFilterChange,
+    handleDateRangeChange,
+    handleCrossFilter,
+    handlePersonaChange,
+    handleUpdateChart,
+    handleAddCustomChart,
+    handleRestoreSnapshot,
+    handleAddFormulaColumn,
+    handleReset: resetDashboardState,
+  } = useDashboardState();
+
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isTelemetryOpen, setIsTelemetryOpen] = useState(false);
   const [isSqlStudioOpen, setIsSqlStudioOpen] = useState(false);
   const [isFormulaStudioOpen, setIsFormulaStudioOpen] = useState(false);
   const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
-  const [persona, setPersona] = useState<ExecutiveLens>('cfo');
 
-  // React 19 Concurrent Transition hook for non-blocking UI rendering
-  const [isPending, startTransition] = useTransition();
+  const openExportModal = useCallback(() => setIsExportModalOpen(true), []);
+  const closeExportModal = useCallback(() => setIsExportModalOpen(false), []);
+  const openShareModal = useCallback(() => setIsShareModalOpen(true), []);
+  const closeShareModal = useCallback(() => setIsShareModalOpen(false), []);
+  const toggleTelemetry = useCallback(() => setIsTelemetryOpen((prev) => !prev), []);
+  const closeTelemetry = useCallback(() => setIsTelemetryOpen(false), []);
+  const openSqlStudio = useCallback(() => setIsSqlStudioOpen(true), []);
+  const closeSqlStudio = useCallback(() => setIsSqlStudioOpen(false), []);
+  const openFormulaStudio = useCallback(() => setIsFormulaStudioOpen(true), []);
+  const closeFormulaStudio = useCallback(() => setIsFormulaStudioOpen(false), []);
+  const openShortcuts = useCallback(() => setIsShortcutsOpen(true), []);
+  const closeShortcuts = useCallback(() => setIsShortcutsOpen(false), []);
+  const closeCustomizer = useCallback(() => setEditingChart(null), [setEditingChart]);
 
-  const [filters, setFilters] = useState<DataFilterState>({
-    searchQuery: '',
-    selectedCategories: {},
-  });
-
-  // Restore shared dashboard permalink from URL hash on mount
-  useEffect(() => {
-    const hash = window.location.hash;
-    if (hash && hash.startsWith('#share=')) {
-      const encoded = hash.replace('#share=', '');
-      const payload = decodeDashboardState(encoded);
-      if (payload) {
-        const restoredDataset = reconstructDatasetFromPayload(payload);
-        setDataset(restoredDataset);
-        const restoredFilters = payload.filters || { searchQuery: '', selectedCategories: {} };
-        const restoredCharts = payload.customCharts || {};
-        setFilters(restoredFilters);
-        setCustomCharts(restoredCharts);
-        historyStore.init({
-          label: 'Shared Dashboard Link',
-          timestamp: Date.now(),
-          filters: restoredFilters,
-          customCharts: restoredCharts,
-          persona: 'cfo',
-        });
-      }
-    }
-  }, []);
-
-  // Initialize history when a new dataset is loaded
-  const handleDatasetLoaded = (newDataset: DatasetSchema) => {
-    const initialFilters = { searchQuery: '', selectedCategories: {} };
-    historyStore.init({
-      label: `Loaded ${newDataset.name}`,
-      timestamp: Date.now(),
-      filters: initialFilters,
-      customCharts: {},
-      persona: 'cfo',
-    });
-    setFilters(initialFilters);
-    setCustomCharts({});
-    setEditingChart(null);
-    setDataset(newDataset);
-  };
-
-  // Find date column name if one exists
-  const dateColumnName = useMemo(() => {
-    return dataset?.columns.find((c) => c.type === 'date')?.name;
-  }, [dataset]);
-
-  // Synchronized row filtering across the dataset
-  const filteredRows = useMemo(() => {
-    if (!dataset) return [];
-    return filterRows(dataset.rows, filters, dateColumnName);
-  }, [dataset, filters, dateColumnName]);
-
-  // Active dataset schema derived from filtered rows (with dynamically recalculated metrics)
-  const activeDataset: DatasetSchema | null = useMemo(() => {
-    if (!dataset) return null;
-    return deriveFilteredSchema(dataset, filteredRows);
-  }, [dataset, filteredRows]);
-
-  // Re-computed KPI Cards from filtered data tailored to active executive persona (CFO / COO / CMO)
-  const kpis = useMemo(() => {
-    return activeDataset ? buildPersonaKpiCards(activeDataset, persona) : [];
-  }, [activeDataset, persona]);
-
-  // Filter change dispatcher with Concurrent Transition scheduling & History push
-  const handleFilterChange = (nextFilters: DataFilterState | ((prev: DataFilterState) => DataFilterState)) => {
-    const resolved = typeof nextFilters === 'function' ? nextFilters(filters) : nextFilters;
-    historyStore.push('Updated Filters', {
-      filters: resolved,
-      customCharts,
-      persona,
-    });
-    startTransition(() => {
-      setFilters(resolved);
-    });
-  };
-
-  // Interactive direct cross-filtering from clicking chart bars or slices
-  const handleCrossFilter = (colName: string, value: string) => {
-    const current = filters.selectedCategories[colName] || [];
-    const updated = current.includes(value)
-      ? current.filter((v) => v !== value)
-      : [...current, value];
-
-    const nextFilters: DataFilterState = {
-      ...filters,
-      selectedCategories: {
-        ...filters.selectedCategories,
-        [colName]: updated,
-      },
-    };
-
-    historyStore.push(`Cross-Filtered ${colName}: ${value}`, {
-      filters: nextFilters,
-      customCharts,
-      persona,
-    });
-
-    startTransition(() => {
-      setFilters(nextFilters);
-    });
-  };
-
-  // Persona change dispatcher with Concurrent Transition scheduling
-  const handlePersonaChange = (nextPersona: ExecutiveLens) => {
-    historyStore.push(`Switched to ${nextPersona.toUpperCase()} Lens`, {
-      filters,
-      customCharts,
-      persona: nextPersona,
-    });
-    startTransition(() => {
-      setPersona(nextPersona);
-    });
-  };
-
-  // Re-computed charts, merged with user customizations and dynamically aggregated from filtered activeDataset
-  const charts = useMemo(() => {
-    if (!activeDataset) return [];
-    const base = buildChartRecommendations(activeDataset);
-    const mapped = base.map((c) => {
-      const custom = customCharts[c.id];
-      if (!custom) return c;
-
-      const type = custom.type || c.type;
-      const xAxis = custom.xAxis || c.xAxis;
-      const yAxis = custom.yAxis || c.yAxis;
-      const title = custom.title || `${yAxis} by ${xAxis}`;
-
-      // Dynamically aggregate datapoints for customized dimensions from active filtered rows!
-      const data = aggregateChartData(
-        activeDataset.rows,
-        xAxis,
-        yAxis,
-        type,
-        activeDataset.columns
-      );
-
-      return {
-        ...c,
-        type,
-        xAxis,
-        yAxis,
-        title,
-        data,
-      };
-    });
-
-    // Include dynamically created charts (e.g. from SQL Studio)
-    const extraCustomCharts = Object.values(customCharts).filter((c) => !base.some((b) => b.id === c.id));
-    return [...mapped, ...extraCustomCharts];
-  }, [activeDataset, customCharts]);
-
-  const activeEditingChart = useMemo(() => {
-    if (!editingChart) return null;
-    return charts.find((c) => c.id === editingChart.id) || editingChart;
-  }, [charts, editingChart]);
-
-  const handleUpdateChart = (updated: ChartRecommendation) => {
-    const updatedCharts = {
-      ...customCharts,
-      [updated.id]: updated,
-    };
-    historyStore.push(`Customized ${updated.title}`, {
-      filters,
-      customCharts: updatedCharts,
-      persona,
-    });
-    startTransition(() => {
-      setCustomCharts(updatedCharts);
-      setEditingChart(updated);
-    });
-  };
-
-  const handleAddCustomChart = (newChart: ChartRecommendation) => {
-    const updatedCharts = {
-      ...customCharts,
-      [newChart.id]: newChart,
-    };
-    historyStore.push(`Added SQL Chart: ${newChart.title}`, {
-      filters,
-      customCharts: updatedCharts,
-      persona,
-    });
-    startTransition(() => {
-      setCustomCharts(updatedCharts);
-    });
-  };
-
-  // Time-travel snapshot restorer
-  const handleRestoreSnapshot = (snapshot: DashboardSnapshot) => {
-    startTransition(() => {
-      setFilters(snapshot.filters);
-      setCustomCharts(snapshot.customCharts);
-      setPersona(snapshot.persona);
-    });
-  };
-
-  // Formula Studio: dynamically append a calculated column to the live dataset
-  const handleAddFormulaColumn = (columnName: string, values: (number | string)[]) => {
-    if (!dataset) return;
-    const isNumeric = values.every((v) => typeof v === 'number');
-    const numericValues = isNumeric ? values.map(Number) : [];
-    const stats = isNumeric && numericValues.length > 0 ? computeNumericStats(numericValues) : {};
-    const newColumn: import('./types/dataset').ColumnProfile = {
-      name: columnName,
-      type: isNumeric ? 'number' : 'text',
-      nullableCount: 0,
-      uniqueCount: new Set(values.map(String)).size,
-      ...(isNumeric && numericValues.length > 0 ? {
-        min: stats.min,
-        max: stats.max,
-        mean: stats.mean,
-        sum: stats.sum,
-      } : {}),
-    };
-    const newRows = dataset.rows.map((row, i) => ({
-      ...row,
-      [columnName]: values[i] ?? null,
-    }));
-    const filteredExistingCols = dataset.columns.filter(
-      (c) => c.name.toLowerCase() !== columnName.toLowerCase()
-    );
-    setDataset({
-      ...dataset,
-      columns: [...filteredExistingCols, newColumn],
-      columnCount: filteredExistingCols.length + 1,
-      rows: newRows,
-    });
-  };
-
-  const handleReset = () => {
-    setDataset(null);
-    setCustomCharts({});
-    setEditingChart(null);
+  const handleReset = useCallback(() => {
     setIsExportModalOpen(false);
     setIsShareModalOpen(false);
-    setFilters({ searchQuery: '', selectedCategories: {} });
-    historyStore.clear();
-    window.location.hash = '';
-  };
+    resetDashboardState();
+  }, [resetDashboardState]);
 
   // React Native Profiler callback tracking fiber commits only on dashboard area
-  const handleProfilerRender: ProfilerOnRenderCallback = (
-    id,
-    phase,
-    actualDuration,
-    baseDuration,
-    startTime,
-    commitTime
-  ) => {
-    if (id === 'DataLensCanvas') {
-      telemetryStore.recordCommit({
-        id,
-        phase,
-        actualDuration,
-        baseDuration,
-        startTime,
-        commitTime,
-      });
-    }
-  };
+  const handleProfilerRender: ProfilerOnRenderCallback = useCallback(
+    (id, phase, actualDuration, baseDuration, startTime, commitTime) => {
+      if (id === 'DataLensCanvas') {
+        telemetryStore.recordCommit({
+          id,
+          phase,
+          actualDuration,
+          baseDuration,
+          startTime,
+          commitTime,
+        });
+      }
+    },
+    []
+  );
 
   return (
     <div className="min-h-screen bg-[#09090b] text-[#f4f4f5] flex flex-col font-sans">
       <Header
         dataset={dataset}
         onReset={handleReset}
-        onExport={() => setIsExportModalOpen(true)}
-        onShare={() => setIsShareModalOpen(true)}
+        onExport={openExportModal}
+        onShare={openShareModal}
         activePersona={persona}
         onPersonaChange={handlePersonaChange}
         isTelemetryOpen={isTelemetryOpen}
-        onToggleTelemetry={() => setIsTelemetryOpen(!isTelemetryOpen)}
-        onOpenSqlStudio={() => setIsSqlStudioOpen(true)}
-        onOpenFormulaStudio={() => setIsFormulaStudioOpen(true)}
-        onOpenShortcuts={() => setIsShortcutsOpen(true)}
+        onToggleTelemetry={toggleTelemetry}
+        onOpenSqlStudio={openSqlStudio}
+        onOpenFormulaStudio={openFormulaStudio}
+        onOpenShortcuts={openShortcuts}
       />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-8">
@@ -379,12 +183,7 @@ export function App() {
                   <TimelineBrush
                     dataset={dataset}
                     dateColumnName={dateColumnName}
-                    onRangeChange={(startDate, endDate) => {
-                      handleFilterChange((prev) => ({
-                        ...prev,
-                        dateRange: startDate && endDate ? { start: startDate, end: endDate } : undefined,
-                      }));
-                    }}
+                    onRangeChange={handleDateRangeChange}
                   />
                 </CardErrorBoundary>
               </div>
@@ -402,7 +201,7 @@ export function App() {
                 <CardErrorBoundary fallbackTitle="Visualization Engine Anomaly">
                   <ChartGrid
                     charts={charts}
-                    onCustomizeChart={(c) => setEditingChart(c)}
+                    onCustomizeChart={setEditingChart}
                     onCrossFilter={handleCrossFilter}
                     activeFilters={filters.selectedCategories}
                   />
@@ -410,18 +209,18 @@ export function App() {
               </div>
             </Profiler>
 
-            {/* Raw Records Table with 60 FPS Virtual Grid & Pagination */}
+            {/* Secondary Analytical Panels & Raw Records Table */}
             {activeDataset && (
               <>
-                {/* Executive What-If Sensitivity Simulator */}
-                <CardErrorBoundary fallbackTitle="Scenario Simulator Anomaly">
-                  <ScenarioSimulator dataset={activeDataset} />
-                </CardErrorBoundary>
+                <Suspense fallback={null}>
+                  <CardErrorBoundary fallbackTitle="Scenario Simulator Anomaly">
+                    <ScenarioSimulator dataset={activeDataset} />
+                  </CardErrorBoundary>
 
-                {/* Background Web Worker Statistical Correlation Matrix */}
-                <CardErrorBoundary fallbackTitle="Correlation Matrix Anomaly">
-                  <CorrelationMatrix dataset={activeDataset} />
-                </CardErrorBoundary>
+                  <CardErrorBoundary fallbackTitle="Correlation Matrix Anomaly">
+                    <CorrelationMatrix dataset={activeDataset} />
+                  </CardErrorBoundary>
+                </Suspense>
 
                 <CardErrorBoundary fallbackTitle="Data Grid Anomaly">
                   <DataTable dataset={activeDataset} />
@@ -429,62 +228,72 @@ export function App() {
               </>
             )}
 
-            {/* Chart Customizer Slide-Over */}
-            <ChartCustomizer
-              chart={activeEditingChart}
-              columns={dataset.columns}
-              onClose={() => setEditingChart(null)}
-              onUpdateChart={handleUpdateChart}
-            />
+            {/* Lazy-loaded Modals & Overlays */}
+            <Suspense fallback={null}>
+              {activeEditingChart && (
+                <ChartCustomizer
+                  chart={activeEditingChart}
+                  columns={dataset.columns}
+                  onClose={closeCustomizer}
+                  onUpdateChart={handleUpdateChart}
+                />
+              )}
 
-            {/* Boardroom Export Modal */}
-            <ExportModal
-              isOpen={isExportModalOpen}
-              onClose={() => setIsExportModalOpen(false)}
-              dataset={activeDataset || dataset}
-              kpis={kpis}
-            />
+              {isExportModalOpen && (
+                <ExportModal
+                  isOpen={isExportModalOpen}
+                  onClose={closeExportModal}
+                  dataset={activeDataset || dataset}
+                  kpis={kpis}
+                />
+              )}
 
-            {/* Instant Permalinks Share Modal */}
-            <ShareModal
-              isOpen={isShareModalOpen}
-              onClose={() => setIsShareModalOpen(false)}
-              dataset={dataset}
-              filters={filters}
-              customCharts={customCharts}
-            />
+              {isShareModalOpen && (
+                <ShareModal
+                  isOpen={isShareModalOpen}
+                  onClose={closeShareModal}
+                  dataset={dataset}
+                  filters={filters}
+                  customCharts={customCharts}
+                />
+              )}
 
-            {/* In-Memory SQL Query Studio */}
-            <SqlStudioModal
-              isOpen={isSqlStudioOpen}
-              onClose={() => setIsSqlStudioOpen(false)}
-              dataset={activeDataset || dataset}
-              onAddChartToDashboard={handleAddCustomChart}
-            />
+              {isSqlStudioOpen && (
+                <SqlStudioModal
+                  isOpen={isSqlStudioOpen}
+                  onClose={closeSqlStudio}
+                  dataset={activeDataset || dataset}
+                  onAddChartToDashboard={handleAddCustomChart}
+                />
+              )}
 
-            {/* Custom Formula Studio — Calculated Columns */}
-            <FormulaStudioModal
-              isOpen={isFormulaStudioOpen}
-              onClose={() => setIsFormulaStudioOpen(false)}
-              dataset={dataset}
-              onAddColumn={handleAddFormulaColumn}
-            />
+              {isFormulaStudioOpen && (
+                <FormulaStudioModal
+                  isOpen={isFormulaStudioOpen}
+                  onClose={closeFormulaStudio}
+                  dataset={dataset}
+                  onAddColumn={handleAddFormulaColumn}
+                />
+              )}
+
+              {isTelemetryOpen && (
+                <PerformanceHud
+                  isOpen={isTelemetryOpen}
+                  onClose={closeTelemetry}
+                  isPendingTransition={isPending}
+                />
+              )}
+
+              {isShortcutsOpen && (
+                <ShortcutsModal
+                  isOpen={isShortcutsOpen}
+                  onClose={closeShortcuts}
+                />
+              )}
+            </Suspense>
 
             {/* Interactive Time-Travel History Drawer & Undo/Redo Engine */}
             <TimeTravelDrawer onRestoreSnapshot={handleRestoreSnapshot} />
-
-            {/* React 19 Profiler & Telemetry HUD Overlay (Outside of Profiler) */}
-            <PerformanceHud
-              isOpen={isTelemetryOpen}
-              onClose={() => setIsTelemetryOpen(false)}
-              isPendingTransition={isPending}
-            />
-
-            {/* Keyboard Shortcuts Cheat Sheet */}
-            <ShortcutsModal
-              isOpen={isShortcutsOpen}
-              onClose={() => setIsShortcutsOpen(false)}
-            />
           </div>
         )}
       </main>

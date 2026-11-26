@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { executeSqlQuery, convertSqlResultToChart, type SqlQueryResult } from '../engine/sql-engine';
 import type { DatasetSchema, ChartRecommendation } from '../types/dataset';
 import { Terminal, Play, BarChart2, X, Clock, AlertCircle, CheckCircle2, Sparkles, Copy, Check } from 'lucide-react';
+import { useModalAccessibility } from '../hooks/useModalAccessibility';
 
 interface SqlStudioModalProps {
   isOpen: boolean;
@@ -20,6 +21,7 @@ export const SqlStudioModal: React.FC<SqlStudioModalProps> = ({
   const [result, setResult] = useState<SqlQueryResult | null>(null);
   const [addedSuccess, setAddedSuccess] = useState(false);
   const [copied, setCopied] = useState(false);
+  const dialogRef = useModalAccessibility(isOpen, onClose);
 
   // Generate initial query based on dataset columns
   useEffect(() => {
@@ -85,8 +87,19 @@ export const SqlStudioModal: React.FC<SqlStudioModalProps> = ({
   const numCol = dataset.columns.find((c) => c.type === 'number')?.name || dataset.columns[1]?.name;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-md font-sans">
-      <div className="relative w-full max-w-4xl max-h-[90vh] flex flex-col rounded-2xl bg-[#0f0f13] border border-zinc-800 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-md font-sans"
+      onClick={onClose}
+    >
+      <div
+        ref={dialogRef}
+        tabIndex={-1}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="sql-studio-title"
+        onClick={(e) => e.stopPropagation()}
+        className="relative w-full max-w-4xl max-h-[90vh] flex flex-col rounded-2xl bg-[#0f0f13] border border-zinc-800 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150 focus:outline-none"
+      >
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-800 bg-[#14141a]/80">
           <div className="flex items-center gap-3">
@@ -95,7 +108,7 @@ export const SqlStudioModal: React.FC<SqlStudioModalProps> = ({
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-sm font-semibold text-white tracking-tight">
+                <h3 id="sql-studio-title" className="text-sm font-semibold text-white tracking-tight">
                   In-Memory SQL Studio
                 </h3>
                 <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-medium">
@@ -110,6 +123,7 @@ export const SqlStudioModal: React.FC<SqlStudioModalProps> = ({
 
           <button
             onClick={onClose}
+            aria-label="Close modal"
             className="text-zinc-400 hover:text-white p-1.5 rounded-lg hover:bg-zinc-800 transition-colors"
           >
             <X className="w-4 h-4" />

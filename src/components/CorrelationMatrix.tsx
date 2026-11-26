@@ -20,7 +20,7 @@ interface CorrelationMatrixProps {
   dataset: DatasetSchema;
 }
 
-export const CorrelationMatrix: React.FC<CorrelationMatrixProps> = ({ dataset }) => {
+export const CorrelationMatrix: React.FC<CorrelationMatrixProps> = React.memo(({ dataset }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
   const numericColumns = useMemo(() => {
@@ -231,4 +231,4 @@ export const CorrelationMatrix: React.FC<CorrelationMatrixProps> = ({ dataset })
       )}
     </div>
   );
-};
+});

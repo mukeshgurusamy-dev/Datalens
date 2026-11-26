@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { X, Copy, Check, Share2, Globe, ExternalLink, ShieldCheck } from 'lucide-react';
 import type { DatasetSchema, DataFilterState } from '../types/dataset';
 import { encodeDashboardState } from '../engine/permalink';
+import { useModalAccessibility } from '../hooks/useModalAccessibility';
 
 interface ShareModalProps {
   isOpen: boolean;
@@ -22,6 +23,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
   const [copied, setCopied] = useState(false);
   const [includeFilters, setIncludeFilters] = useState(true);
   const [includeCustomCharts, setIncludeCustomCharts] = useState(true);
+  const dialogRef = useModalAccessibility(isOpen, onClose);
 
   if (!isOpen) return null;
 
@@ -59,12 +61,17 @@ export const ShareModal: React.FC<ShareModalProps> = ({
     <AnimatePresence>
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs" onClick={onClose}>
         <motion.div
+          ref={dialogRef}
+          tabIndex={-1}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="share-modal-title"
           initial={{ opacity: 0, scale: 0.95, y: 10 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 10 }}
           transition={{ type: 'spring', stiffness: 350, damping: 28 }}
           onClick={(e) => e.stopPropagation()}
-          className="w-full max-w-lg bg-[#121215] border border-zinc-800 rounded-2xl p-6 shadow-2xl"
+          className="w-full max-w-lg bg-[#121215] border border-zinc-800 rounded-2xl p-6 shadow-2xl focus:outline-none"
         >
           {/* Header */}
           <div className="flex items-center justify-between pb-4 border-b border-zinc-850">
@@ -73,7 +80,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                 <Share2 className="w-4 h-4" />
               </div>
               <div>
-                <h3 className="text-base font-semibold text-white tracking-tight">
+                <h3 id="share-modal-title" className="text-base font-semibold text-white tracking-tight">
                   Share Executive Dashboard
                 </h3>
                 <p className="text-xs text-zinc-400">
@@ -83,6 +90,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
             </div>
             <button
               onClick={onClose}
+              aria-label="Close modal"
               className="p-1 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
             >
               <X className="w-5 h-5" />

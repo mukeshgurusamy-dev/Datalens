@@ -16,6 +16,7 @@ import { useState, useMemo, useRef, useEffect, useDeferredValue } from 'react';
 import { X, Plus, Calculator, AlertTriangle, CheckCircle2, Zap } from 'lucide-react';
 import type { DatasetSchema, ColumnProfile } from '../types/dataset';
 import { computeColumn } from '../engine/formula-engine';
+import { useModalAccessibility } from '../hooks/useModalAccessibility';
 
 // ── Props ──────────────────────────────────────────────────────────────
 
@@ -143,6 +144,7 @@ export const FormulaStudioModal: React.FC<FormulaStudioModalProps> = ({
     }, 700);
   };
 
+  const dialogRef = useModalAccessibility(isOpen, onClose);
   if (!isOpen) return null;
 
   return (
@@ -151,7 +153,12 @@ export const FormulaStudioModal: React.FC<FormulaStudioModalProps> = ({
       onClick={onClose}
     >
       <div
-        className="bg-zinc-950 border border-zinc-800 rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col"
+        ref={dialogRef}
+        tabIndex={-1}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="formula-studio-title"
+        className="bg-zinc-950 border border-zinc-800 rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col focus:outline-none"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -161,11 +168,15 @@ export const FormulaStudioModal: React.FC<FormulaStudioModalProps> = ({
               <Calculator className="w-4 h-4 text-cyan-400" />
             </div>
             <div>
-              <h2 className="text-sm font-semibold text-white">Formula Studio</h2>
+              <h2 id="formula-studio-title" className="text-sm font-semibold text-white">Formula Studio</h2>
               <p className="text-[11px] text-zinc-500">Build calculated columns with safe expressions</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-1 hover:bg-zinc-800 rounded-lg transition-colors">
+          <button
+            onClick={onClose}
+            aria-label="Close modal"
+            className="p-1 hover:bg-zinc-800 rounded-lg transition-colors"
+          >
             <X className="w-4 h-4 text-zinc-400" />
           </button>
         </div>
