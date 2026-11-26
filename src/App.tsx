@@ -8,7 +8,6 @@ import { ChartCustomizer } from './components/ChartCustomizer';
 import { ExportModal } from './components/ExportModal';
 import { ShareModal } from './components/ShareModal';
 import { DataTable } from './components/DataTable';
-import { AiBriefing } from './components/AiBriefing';
 import { PerformanceHud } from './components/PerformanceHud';
 import { TimeTravelDrawer } from './components/TimeTravelDrawer';
 import { CardErrorBoundary } from './components/CardErrorBoundary';
@@ -394,13 +393,6 @@ export function App() {
             {/* Printable & Exportable Canvas Container wrapped in targeted Profiler */}
             <Profiler id="DataLensCanvas" onRender={handleProfilerRender}>
               <div id="dashboard-printable-area" className="p-2 sm:p-4 rounded-2xl bg-[#09090b]">
-                {/* Executive AI Briefing & Natural Language Insights */}
-                {activeDataset && (
-                  <CardErrorBoundary fallbackTitle="AI Briefing Anomaly">
-                    <AiBriefing schema={activeDataset} />
-                  </CardErrorBoundary>
-                )}
-
                 {/* Executive KPI Cards */}
                 <CardErrorBoundary fallbackTitle="Executive KPI Anomaly">
                   <KpiRow cards={kpis} />

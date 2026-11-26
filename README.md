@@ -74,7 +74,7 @@ Traditional enterprise BI platforms (Tableau, PowerBI, Looker) require cloud dat
 * **Direct Chart Filtering:** Clicking any chart bar, scatter point, or donut slice instantly cascades cross-filters across the entire dashboard canvas.
 * **Interactive Timeline Brush:** Custom `useTimelineBrush` hook powering a dual-handle SVG sparkline track with smooth drag-zoom and 1-click date presets (`7D`, `30D`, `90D`, `YTD`, `All`).
 
-### 7. Executive Lenses & Dynamic AI Briefings
+### 7. Executive Lenses & Statistical Insights
 * **Leadership Personas:** Toggle between **[ CFO Capital & Risk | COO Throughput & SLA | CMO Growth & Market Share ]** to dynamically restructure KPI cards according to executive priorities.
 * **Deterministic Insights:** Automatic root-cause attribution, Tukey's fences outlier identification ($IQR = Q_3 - Q_1$), and Holt-Winters double-exponential trajectory forecasting with 95% confidence bands.
 
