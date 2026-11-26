@@ -7,6 +7,7 @@ import { FilterBar } from '../FilterBar';
 import { DataTable } from '../DataTable';
 import { ShareModal } from '../ShareModal';
 import { ChartCustomizer } from '../ChartCustomizer';
+import { ExportModal } from '../ExportModal';
 import type { DatasetSchema, KpiCard, DataFilterState, ChartRecommendation } from '../../types/dataset';
 
 beforeAll(() => {
@@ -203,5 +204,44 @@ describe('React Dashboard Components', () => {
         title: 'total_revenue by region (SQL Studio)',
       })
     );
+  });
+
+  it('ExportModal provides unified section toggles, theme, and format options for PDF & HD Image', () => {
+    const charts: ChartRecommendation[] = [
+      {
+        id: 'chart-1',
+        type: 'bar',
+        title: 'Revenue by Region',
+        description: 'Regional breakdown',
+        xAxis: 'region',
+        yAxis: 'revenue',
+        data: [],
+      },
+    ];
+
+    render(
+      <ExportModal
+        isOpen={true}
+        onClose={vi.fn()}
+        dataset={MOCK_DATASET}
+        kpis={[{ id: 'k1', title: 'Total Revenue', value: '$9,000' }]}
+        charts={charts}
+        filters={{ searchQuery: '', selectedCategories: {} }}
+        totalRowCount={3}
+      />
+    );
+
+    expect(screen.getByRole('dialog')).toHaveAttribute('aria-modal', 'true');
+    expect(screen.getByText('Header & Metadata')).toBeInTheDocument();
+    expect(screen.getByText('Active Filter Scope')).toBeInTheDocument();
+    expect(screen.getByText('Data Sample Table')).toBeInTheDocument();
+    expect(screen.getByText('Revenue by Region')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Download Executive PDF Report/i })).toBeInTheDocument();
+
+    // Switch to HD Image tab and verify resolution/format controls
+    fireEvent.click(screen.getByRole('button', { name: /HD Image/i }));
+    expect(screen.getByRole('button', { name: /3x Ultra-HD/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /JPEG/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Download 2x HD PNG Report/i })).toBeInTheDocument();
   });
 });

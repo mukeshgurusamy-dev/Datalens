@@ -245,6 +245,9 @@ export function App() {
                   onClose={closeExportModal}
                   dataset={activeDataset || dataset}
                   kpis={kpis}
+                  charts={charts}
+                  filters={filters}
+                  totalRowCount={dataset.rowCount}
                 />
               )}
 

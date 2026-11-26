@@ -88,6 +88,7 @@ const ChartCardItem: React.FC<ChartCardItemProps> = React.memo(({
 
   return (
     <motion.div
+      data-chart-id={chart.id}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ type: 'spring', stiffness: 300, damping: 25, delay: idx * 0.08 }}

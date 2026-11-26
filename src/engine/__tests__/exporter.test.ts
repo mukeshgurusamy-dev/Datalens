@@ -63,4 +63,33 @@ describe('Boardroom Report Exporter - Automated Quality & Accuracy Suite', () =>
     expect(md).toContain('$240,000');
     expect(md).toContain('Enterprise tier grew 30% QoQ.');
   });
+
+  it('builds accurate filter scope summary items for active filters and date ranges', async () => {
+    const { buildFilterScopeItems } = await import('../exporter');
+    const mockSchema = {
+      id: 'scope-1',
+      name: 'Sales',
+      slug: 'sales',
+      rowCount: 45,
+      columnCount: 2,
+      columns: [],
+      rows: [],
+      parsedAt: Date.now(),
+    } as any;
+
+    const items = buildFilterScopeItems(
+      mockSchema,
+      {
+        searchQuery: 'Amazon',
+        dateRange: { start: '2024-01-01', end: '2024-03-31' },
+        selectedCategories: { region: ['North America', 'Europe'] },
+      },
+      200
+    );
+
+    expect(items).toContain('Filtered: 45 of 200 records');
+    expect(items).toContain('Date Range: 2024-01-01 to 2024-03-31');
+    expect(items).toContain('Search: "Amazon"');
+    expect(items).toContain('region: North America, Europe');
+  });
 });
