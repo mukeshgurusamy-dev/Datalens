@@ -1,4 +1,4 @@
-import { useState, useCallback, lazy, Suspense, Profiler, type ProfilerOnRenderCallback } from 'react';
+import { useState, useCallback, useEffect, lazy, Suspense, Profiler, type ProfilerOnRenderCallback } from 'react';
 import { MotionConfig, motion, AnimatePresence } from 'motion/react';
 import { Header } from './components/Header';
 import { Dropzone } from './components/Dropzone';
@@ -78,6 +78,13 @@ export function App() {
   const [isSqlStudioOpen, setIsSqlStudioOpen] = useState(false);
   const [isFormulaStudioOpen, setIsFormulaStudioOpen] = useState(false);
   const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
+
+  // Sync document title for browser tabs & JS-executing crawlers
+  useEffect(() => {
+    document.title = dataset
+      ? `${dataset.name} — DataLens`
+      : 'DataLens — Browser-Native Analytics Studio & Client-Side BI';
+  }, [dataset]);
 
   const openExportModal = useCallback(() => setIsExportModalOpen(true), []);
   const closeExportModal = useCallback(() => setIsExportModalOpen(false), []);

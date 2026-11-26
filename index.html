@@ -2,17 +2,92 @@
 <html lang="en" class="dark">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="referrer" content="no-referrer" />
-    <title>DataLens — Browser-Native Analytics Studio</title>
-    <meta name="description" content="Turn any CSV, Excel, or JSON file into an interactive analytical workspace in the browser." />
+    <meta name="theme-color" content="#09090b" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+
+    <title>DataLens — Browser-Native Analytics Studio &amp; Client-Side BI</title>
+    <meta
+      name="description"
+      content="Zero-server client-side business intelligence and data analytics studio. Ingest CSV, Excel (.xlsx), JSON, or Google Sheets in browser memory with automatic profiling, in-memory SQL, Holt-Winters forecasting, Pearson correlations, and PDF/XLSX export."
+    />
+    <meta
+      name="keywords"
+      content="client-side BI, browser analytics, CSV analyzer, Excel dashboard, in-memory SQL, data visualization, React analytics, privacy-first BI"
+    />
+    <meta name="author" content="Mukesh Gurusamy" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+
+    <!-- Open Graph / Social Sharing -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="DataLens" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:title" content="DataLens — Browser-Native Analytics Studio" />
+    <meta
+      property="og:description"
+      content="Drop in CSV, Excel, JSON, or Google Sheets. Explore schemas, run client-side SQL, cross-filter at 60 FPS, and export PDF reports with zero server uploads."
+    />
+    <meta property="og:image" content="/og-card.svg" />
+    <meta property="og:image:alt" content="DataLens Browser-Native Analytics Studio" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="DataLens — Browser-Native Analytics Studio" />
+    <meta
+      name="twitter:description"
+      content="Zero-server client-side BI studio for CSV, Excel, JSON, and Google Sheets with in-memory SQL and PDF reporting."
+    />
+    <meta name="twitter:image" content="/og-card.svg" />
+
+    <!-- Structured Data (Schema.org WebApplication) -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "DataLens",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "Any",
+        "browserRequirements": "Requires JavaScript and HTML5",
+        "description": "Zero-server client-side business intelligence and analytics studio for CSV, Excel, JSON, and Google Sheets.",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        },
+        "featureList": [
+          "Automatic CSV, Excel (.xlsx), JSON, and Google Sheets schema profiling",
+          "In-memory client-side SQL AST query engine",
+          "Safe AST Formula Studio for calculated columns",
+          "Web Worker Pearson Correlation Matrix",
+          "60 FPS virtualized data explorer",
+          "Customizable Executive PDF, Excel (.xlsx), and CSV export"
+        ]
+      }
+    </script>
+
+    <!-- Typography Preconnect -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
   </head>
   <body class="antialiased selection:bg-blue-600 selection:text-white">
     <div id="root"></div>
+    <noscript>
+      <main style="max-width:720px;margin:48px auto;padding:24px;font-family:system-ui,sans-serif;color:#f4f4f5;">
+        <h1>DataLens — Browser-Native Analytics Studio</h1>
+        <p>
+          DataLens is a zero-server business intelligence studio that runs 100% in your browser.
+          Upload CSV, Excel (.xlsx), JSON, or Google Sheets to automatically profile columns,
+          query with in-memory SQL, model what-if scenarios, and export executive PDF reports.
+        </p>
+        <p>Please enable JavaScript to use the interactive DataLens workspace.</p>
+      </main>
+    </noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

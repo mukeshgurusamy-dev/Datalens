@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" fill="none">
+  <rect width="1200" height="630" fill="#09090b"/>
+  <rect x="48" y="48" width="1104" height="534" rx="20" fill="#111114" stroke="#27272a" stroke-width="2"/>
+  <rect x="96" y="108" width="44" height="44" rx="10" fill="#18181c" stroke="#323238" stroke-width="1.5"/>
+  <path d="M110 138v-10m8 10v-18m8 18v-14" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round"/>
+  <text x="158" y="138" fill="#f4f4f5" font-family="Inter, system-ui, sans-serif" font-size="28" font-weight="600">DataLens</text>
+  <text x="96" y="246" fill="#f4f4f5" font-family="Inter, system-ui, sans-serif" font-size="56" font-weight="700">Browser-Native Analytics Studio</text>
+  <text x="96" y="308" fill="#8e8e98" font-family="Inter, system-ui, sans-serif" font-size="26">Drop in CSV, Excel, JSON, or Google Sheets. Profile schemas, run SQL,</text>
+  <text x="96" y="346" fill="#8e8e98" font-family="Inter, system-ui, sans-serif" font-size="26">cross-filter at 60 FPS, and export executive PDF reports — 100% locally.</text>
+  <rect x="96" y="424" width="210" height="44" rx="8" fill="#18181c" stroke="#27272a"/>
+  <text x="122" y="452" fill="#d4d4d8" font-family="JetBrains Mono, monospace" font-size="18">In-Memory SQL</text>
+  <rect x="324" y="424" width="240" height="44" rx="8" fill="#18181c" stroke="#27272a"/>
+  <text x="350" y="452" fill="#d4d4d8" font-family="JetBrains Mono, monospace" font-size="18">60 FPS Virtual Grid</text>
+  <rect x="582" y="424" width="220" height="44" rx="8" fill="#18181c" stroke="#27272a"/>
+  <text x="608" y="452" fill="#d4d4d8" font-family="JetBrains Mono, monospace" font-size="18">Zero-Server Privacy</text>
+  <rect x="820" y="424" width="200" height="44" rx="8" fill="#2563eb"/>
+  <text x="850" y="452" fill="#ffffff" font-family="Inter, system-ui, sans-serif" font-size="18" font-weight="600">PDF &amp; XLSX Export</text>
+</svg>
