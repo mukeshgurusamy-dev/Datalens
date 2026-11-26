@@ -2,19 +2,34 @@ import { useState, useCallback, useEffect, lazy, Suspense, Profiler, type Profil
 import { MotionConfig, motion, AnimatePresence } from 'motion/react';
 import { Header } from './components/Header';
 import { Dropzone } from './components/Dropzone';
-import { FilterBar } from './components/FilterBar';
-import { KpiRow } from './components/KpiRow';
-import { ChartGrid } from './components/ChartGrid';
-import { DataTable } from './components/DataTable';
-import { TimeTravelDrawer } from './components/TimeTravelDrawer';
 import { CardErrorBoundary } from './components/CardErrorBoundary';
-import { TimelineBrush } from './components/TimelineBrush';
 import { FLUID_SPRING, ScrollReveal } from './components/MotionPrimitives';
 import { useDashboardState } from './hooks/useDashboardState';
 import { telemetryStore } from './engine/telemetry-store';
+import { scheduleIdlePrefetch } from './utils/performance';
 import { LayoutGrid, Table2, SlidersHorizontal, RefreshCw } from 'lucide-react';
 
 type WorkspaceTab = 'overview' | 'data' | 'modeling';
+
+// Lazy-loaded workspace views so the initial landing page never parses Recharts (~488 kB) upfront
+const FilterBar = lazy(() =>
+  import('./components/FilterBar').then((m) => ({ default: m.FilterBar }))
+);
+const KpiRow = lazy(() =>
+  import('./components/KpiRow').then((m) => ({ default: m.KpiRow }))
+);
+const ChartGrid = lazy(() =>
+  import('./components/ChartGrid').then((m) => ({ default: m.ChartGrid }))
+);
+const DataTable = lazy(() =>
+  import('./components/DataTable').then((m) => ({ default: m.DataTable }))
+);
+const TimeTravelDrawer = lazy(() =>
+  import('./components/TimeTravelDrawer').then((m) => ({ default: m.TimeTravelDrawer }))
+);
+const TimelineBrush = lazy(() =>
+  import('./components/TimelineBrush').then((m) => ({ default: m.TimelineBrush }))
+);
 
 // Lazy-loaded modals and secondary analytical panels to keep initial bundle lean
 const ChartCustomizer = lazy(() =>
@@ -85,6 +100,16 @@ export function App() {
       ? `${dataset.name} — DataLens`
       : 'DataLens — Browser-Native Analytics Studio & Client-Side BI';
   }, [dataset]);
+
+  // Pre-warm primary dashboard chunks during idle time after initial landing paint
+  useEffect(() => {
+    return scheduleIdlePrefetch(() => {
+      void import('./components/FilterBar');
+      void import('./components/KpiRow');
+      void import('./components/ChartGrid');
+      void import('./components/TimelineBrush');
+    });
+  }, []);
 
   const openExportModal = useCallback(() => setIsExportModalOpen(true), []);
   const closeExportModal = useCallback(() => setIsExportModalOpen(false), []);
@@ -209,13 +234,15 @@ export function App() {
             {/* Global Filter Ribbon */}
             {(activeTab === 'overview' || activeTab === 'data') && (
               <div data-export-ignore="true">
-                <FilterBar
-                  columns={dataset.columns}
-                  filters={filters}
-                  onFilterChange={handleFilterChange}
-                  totalRowCount={dataset.rowCount}
-                  filteredRowCount={filteredRows.length}
-                />
+                <Suspense fallback={<div className="h-[54px] mb-5 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-hairline)] animate-pulse" />}>
+                  <FilterBar
+                    columns={dataset.columns}
+                    filters={filters}
+                    onFilterChange={handleFilterChange}
+                    totalRowCount={dataset.rowCount}
+                    filteredRowCount={filteredRows.length}
+                  />
+                </Suspense>
               </div>
             )}
 
@@ -232,29 +259,48 @@ export function App() {
                   {dateColumnName && (
                     <div data-export-ignore="true">
                       <CardErrorBoundary fallbackTitle="Timeline Brush Anomaly">
-                        <TimelineBrush
-                          dataset={dataset}
-                          dateColumnName={dateColumnName}
-                          onRangeChange={handleDateRangeChange}
-                        />
+                        <Suspense fallback={<div className="h-[72px] mb-5 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-hairline)] animate-pulse" />}>
+                          <TimelineBrush
+                            dataset={dataset}
+                            dateColumnName={dateColumnName}
+                            onRangeChange={handleDateRangeChange}
+                          />
+                        </Suspense>
                       </CardErrorBoundary>
                     </div>
                   )}
 
                   <Profiler id="DataLensCanvas" onRender={handleProfilerRender}>
                     <div id="dashboard-printable-area" className="rounded-xl">
-                      <CardErrorBoundary fallbackTitle="Executive KPI Anomaly">
-                        <KpiRow cards={kpis} />
-                      </CardErrorBoundary>
+                      <Suspense
+                        fallback={
+                          <div className="space-y-6">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                              {[0, 1, 2, 3].map((i) => (
+                                <div key={i} className="h-[108px] rounded-xl bg-[var(--bg-surface)] border border-[var(--border-hairline)] animate-pulse" />
+                              ))}
+                            </div>
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                              {[0, 1].map((i) => (
+                                <div key={i} className="h-[360px] rounded-xl bg-[var(--bg-surface)] border border-[var(--border-hairline)] animate-pulse" />
+                              ))}
+                            </div>
+                          </div>
+                        }
+                      >
+                        <CardErrorBoundary fallbackTitle="Executive KPI Anomaly">
+                          <KpiRow cards={kpis} />
+                        </CardErrorBoundary>
 
-                      <CardErrorBoundary fallbackTitle="Visualization Engine Anomaly">
-                        <ChartGrid
-                          charts={charts}
-                          onCustomizeChart={setEditingChart}
-                          onCrossFilter={handleCrossFilter}
-                          activeFilters={filters.selectedCategories}
-                        />
-                      </CardErrorBoundary>
+                        <CardErrorBoundary fallbackTitle="Visualization Engine Anomaly">
+                          <ChartGrid
+                            charts={charts}
+                            onCustomizeChart={setEditingChart}
+                            onCrossFilter={handleCrossFilter}
+                            activeFilters={filters.selectedCategories}
+                          />
+                        </CardErrorBoundary>
+                      </Suspense>
                     </div>
                   </Profiler>
                 </motion.div>
@@ -270,7 +316,9 @@ export function App() {
                 >
                   <ScrollReveal>
                     <CardErrorBoundary fallbackTitle="Data Grid Anomaly">
-                      <DataTable dataset={activeDataset} />
+                      <Suspense fallback={<div className="h-[520px] rounded-xl bg-[var(--bg-surface)] border border-[var(--border-hairline)] animate-pulse" />}>
+                        <DataTable dataset={activeDataset} />
+                      </Suspense>
                     </CardErrorBoundary>
                   </ScrollReveal>
                 </motion.div>
@@ -371,7 +419,9 @@ export function App() {
             </Suspense>
 
             {/* Interactive Time-Travel History Drawer */}
-            <TimeTravelDrawer onRestoreSnapshot={handleRestoreSnapshot} />
+            <Suspense fallback={null}>
+              <TimeTravelDrawer onRestoreSnapshot={handleRestoreSnapshot} />
+            </Suspense>
           </div>
         )}
       </main>

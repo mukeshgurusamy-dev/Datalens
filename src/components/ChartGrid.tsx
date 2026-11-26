@@ -93,7 +93,9 @@ const ChartCardItem: React.FC<ChartCardItemProps> = React.memo(({
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.12 }}
       transition={{ duration: 0.36, delay: (idx % 2) * 0.06, ease: [0.22, 1, 0.36, 1] }}
-      className="spotlight-card rounded-xl p-5 flex flex-col justify-between group min-w-0 overflow-hidden"
+      className={`spotlight-card rounded-xl p-5 flex flex-col justify-between group min-w-0 overflow-hidden ${
+        idx >= 2 ? 'cv-auto' : ''
+      }`}
     >
       {/* Header */}
       <div className="flex items-start justify-between gap-4 mb-4">
