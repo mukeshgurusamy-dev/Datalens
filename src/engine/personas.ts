@@ -7,6 +7,8 @@ export type ExecutiveLens = 'cfo' | 'coo' | 'cmo';
 export interface PersonaProfile {
   id: ExecutiveLens;
   name: string;
+  abbreviation: string;
+  fullName: string;
   role: string;
   badge: string;
   description: string;
@@ -16,6 +18,8 @@ export const EXECUTIVE_PERSONAS: Record<ExecutiveLens, PersonaProfile> = {
   cfo: {
     id: 'cfo',
     name: 'CFO Lens',
+    abbreviation: 'CFO',
+    fullName: 'Chief Financial Officer',
     role: 'Financial Controller & Treasury',
     badge: 'Capital & Risk',
     description: 'Prioritizes total revenue velocity, currency exposure, and financial loss mitigation.',
@@ -23,6 +27,8 @@ export const EXECUTIVE_PERSONAS: Record<ExecutiveLens, PersonaProfile> = {
   coo: {
     id: 'coo',
     name: 'COO Lens',
+    abbreviation: 'COO',
+    fullName: 'Chief Operating Officer',
     role: 'Operations & Settlement',
     badge: 'Throughput & SLA',
     description: 'Prioritizes transaction success rates, decline bottlenecks, and operational reliability.',
@@ -30,6 +36,8 @@ export const EXECUTIVE_PERSONAS: Record<ExecutiveLens, PersonaProfile> = {
   cmo: {
     id: 'cmo',
     name: 'CMO Lens',
+    abbreviation: 'CMO',
+    fullName: 'Chief Marketing Officer',
     role: 'Growth & Merchant Commerce',
     badge: 'Market Share',
     description: 'Prioritizes merchant diversification, category adoption, and average ticket expansion.',

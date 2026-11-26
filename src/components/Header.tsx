@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { FLUID_SPRING, ScrollProgressBar } from './MotionPrimitives';
 import type { DatasetSchema } from '../types/dataset';
-import type { ExecutiveLens } from '../engine/personas';
+import { EXECUTIVE_PERSONAS, type ExecutiveLens } from '../engine/personas';
 
 interface HeaderProps {
   dataset: DatasetSchema | null;
@@ -82,14 +82,22 @@ export const Header: React.FC<HeaderProps> = React.memo(({
             <>
               {/* Segmented Executive Lens (Tablet md+ and Desktop) */}
               {onPersonaChange && (
-                <div className="hidden md:flex items-center bg-[var(--bg-surface)] border border-[var(--border-hairline)] rounded-lg p-0.5 text-[11px] font-mono">
+                <div
+                  role="group"
+                  aria-label="Executive leadership lens"
+                  className="hidden md:flex items-center bg-[var(--bg-surface)] border border-[var(--border-hairline)] rounded-lg p-0.5 text-[11px] font-mono"
+                >
                   {(['cfo', 'coo', 'cmo'] as ExecutiveLens[]).map((p) => {
                     const isActive = activePersona === p;
+                    const info = EXECUTIVE_PERSONAS[p];
                     return (
                       <button
                         key={p}
+                        type="button"
                         onClick={() => onPersonaChange(p)}
-                        className={`relative px-2.5 py-1 rounded-md transition-colors uppercase ${
+                        title={`${info.fullName} (${info.role})`}
+                        aria-pressed={isActive}
+                        className={`group relative flex items-center gap-1.5 px-2.5 py-1 rounded-md transition-all ${
                           isActive
                             ? 'text-[var(--text-primary)] font-semibold'
                             : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
@@ -102,7 +110,17 @@ export const Header: React.FC<HeaderProps> = React.memo(({
                             className="absolute inset-0 rounded-md bg-[var(--bg-elevated)] border border-[var(--border-hairline)]"
                           />
                         )}
-                        <span className="relative z-10">{p}</span>
+                        <span className="relative z-10 font-mono uppercase">{info.abbreviation}</span>
+                        {/* Smooth fluid expansion on active or hover */}
+                        <span
+                          className={`relative z-10 text-[10px] tracking-normal font-sans font-normal transition-all duration-200 overflow-hidden whitespace-nowrap ${
+                            isActive
+                              ? 'inline-block max-w-[140px] opacity-100 text-[var(--text-secondary)]'
+                              : 'hidden group-hover:inline-block max-w-[140px] opacity-80 text-[var(--text-muted)]'
+                          }`}
+                        >
+                          • {info.fullName}
+                        </span>
                       </button>
                     );
                   })}
@@ -218,24 +236,39 @@ export const Header: React.FC<HeaderProps> = React.memo(({
             <div className="p-3 space-y-3">
               {/* Mobile Persona Selector */}
               {onPersonaChange && (
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-[11px] font-mono text-[var(--text-muted)] uppercase">
-                    Executive Lens
-                  </span>
-                  <div className="flex items-center bg-[var(--bg-elevated)] border border-[var(--border-hairline)] rounded-lg p-0.5 text-xs font-mono">
-                    {(['cfo', 'coo', 'cmo'] as ExecutiveLens[]).map((p) => (
-                      <button
-                        key={p}
-                        onClick={() => runAndCloseMobile(() => onPersonaChange(p))}
-                        className={`px-3 py-1.5 rounded-md uppercase transition-colors ${
-                          activePersona === p
-                            ? 'bg-[var(--bg-surface)] text-[var(--text-primary)] font-semibold border border-[var(--border-hairline)]'
-                            : 'text-[var(--text-muted)]'
-                        }`}
-                      >
-                        {p}
-                      </button>
-                    ))}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-[11px] font-mono text-[var(--text-muted)] uppercase">
+                      Executive Lens
+                    </span>
+                    {activePersona && (
+                      <span className="text-[10px] text-[var(--text-secondary)] font-medium">
+                        {EXECUTIVE_PERSONAS[activePersona].fullName}
+                      </span>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-3 gap-1 bg-[var(--bg-elevated)] border border-[var(--border-hairline)] rounded-lg p-1 text-xs">
+                    {(['cfo', 'coo', 'cmo'] as ExecutiveLens[]).map((p) => {
+                      const isActive = activePersona === p;
+                      const info = EXECUTIVE_PERSONAS[p];
+                      return (
+                        <button
+                          key={p}
+                          type="button"
+                          onClick={() => runAndCloseMobile(() => onPersonaChange(p))}
+                          className={`flex flex-col items-center justify-center py-2 px-1 rounded-md transition-colors ${
+                            isActive
+                              ? 'bg-[var(--bg-surface)] text-[var(--text-primary)] font-semibold border border-[var(--border-hairline)] shadow-sm'
+                              : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+                          }`}
+                        >
+                          <span className="font-mono font-bold uppercase">{info.abbreviation}</span>
+                          <span className="text-[9px] text-[var(--text-muted)] leading-tight text-center truncate max-w-full">
+                            {info.fullName.replace('Chief ', '')}
+                          </span>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               )}
