@@ -59,7 +59,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs" onClick={onClose}>
+      <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/70 backdrop-blur-xs" onClick={onClose}>
         <motion.div
           ref={dialogRef}
           tabIndex={-1}
@@ -71,7 +71,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
           exit={{ opacity: 0, scale: 0.95, y: 10 }}
           transition={{ type: 'spring', stiffness: 350, damping: 28 }}
           onClick={(e) => e.stopPropagation()}
-          className="w-full max-w-lg bg-[#121215] border border-zinc-800 rounded-2xl p-6 shadow-2xl focus:outline-none"
+          className="w-full max-w-lg bg-[#121215] border border-zinc-800 rounded-t-2xl sm:rounded-2xl p-5 sm:p-6 shadow-2xl focus:outline-none max-h-[92dvh] overflow-y-auto pb-safe sm:pb-6"
         >
           {/* Header */}
           <div className="flex items-center justify-between pb-4 border-b border-zinc-850">

@@ -118,7 +118,7 @@ export function App() {
 
   return (
     <MotionConfig reducedMotion="user">
-    <div className="min-h-screen bg-[var(--bg-canvas)] text-[var(--text-primary)] flex flex-col font-sans">
+    <div className="min-h-dvh bg-[var(--bg-canvas)] text-[var(--text-primary)] flex flex-col font-sans">
       <Header
         dataset={dataset}
         onReset={handleReset}
@@ -133,7 +133,7 @@ export function App() {
         onOpenShortcuts={openShortcuts}
       />
 
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6">
+      <main className="flex-1 max-w-[1800px] w-full mx-auto px-3 sm:px-6 py-5 sm:py-6">
         {!dataset ? (
           <Dropzone onDatasetLoaded={handleDatasetLoaded} />
         ) : (
@@ -163,7 +163,7 @@ export function App() {
               {/* Workspace Tabs with Shared-Element Fluid Pill */}
               <nav
                 aria-label="Workspace views"
-                className="inline-flex items-center bg-[var(--bg-surface)] border border-[var(--border-hairline)] rounded-lg p-1 text-xs font-medium self-start"
+                className="inline-flex items-center bg-[var(--bg-surface)] border border-[var(--border-hairline)] rounded-lg p-1 text-xs font-medium self-start max-w-full overflow-x-auto"
               >
                 {(
                   [
@@ -178,7 +178,7 @@ export function App() {
                       key={id}
                       type="button"
                       onClick={() => setActiveTab(id)}
-                      className={`relative inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-colors ${
+                      className={`relative inline-flex items-center gap-1.5 px-3 min-h-[36px] sm:min-h-0 sm:py-1.5 rounded-md transition-colors whitespace-nowrap shrink-0 ${
                         isActive
                           ? 'text-[var(--text-primary)]'
                           : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'

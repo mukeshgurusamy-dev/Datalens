@@ -24,7 +24,10 @@ const PerformanceHudContent: React.FC<{
     : 'text-rose-400 bg-rose-500/10 border-rose-500/20';
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 w-96 max-w-[calc(100vw-2rem)] rounded-2xl bg-[#101014]/95 border border-zinc-800 shadow-2xl backdrop-blur-xl overflow-hidden font-sans text-xs transition-all">
+    <div
+      className="fixed bottom-3 right-3 sm:bottom-6 sm:right-6 z-50 w-[calc(100vw-1.5rem)] sm:w-96 max-h-[75dvh] flex flex-col rounded-xl bg-[#101014]/95 border border-zinc-800 shadow-2xl backdrop-blur-xl overflow-hidden font-sans text-xs transition-all"
+      style={{ marginBottom: 'env(safe-area-inset-bottom)' }}
+    >
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-800 bg-[#14141a]/60">
         <div className="flex items-center gap-2">

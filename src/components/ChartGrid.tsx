@@ -143,14 +143,14 @@ const ChartCardItem: React.FC<ChartCardItemProps> = React.memo(({
       </div>
 
       {/* Chart Canvas */}
-      <div className="w-full h-72 sm:h-80 pt-2 min-h-[300px]" style={{ minHeight: 300 }}>
+      <div className="w-full h-[250px] sm:h-[300px] 2xl:h-[330px] pt-2">
         {!activeData || activeData.length === 0 ? (
           <div className="w-full h-full flex flex-col items-center justify-center text-zinc-500 border border-dashed border-zinc-800 rounded-xl p-4">
             <p className="text-xs font-medium text-zinc-400">No records match the active filters</p>
             <p className="text-[11px] text-zinc-600 mt-1">Try clearing or adjusting filter values</p>
           </div>
         ) : (
-          <ResponsiveContainer width="100%" height={300} minWidth={100} minHeight={250}>
+          <ResponsiveContainer width="100%" height="100%" minWidth={100} minHeight={220}>
             {chart.type === 'area' ? (
               <AreaChart data={activeData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <defs>
@@ -353,7 +353,7 @@ export const ChartGrid: React.FC<ChartGridProps> = React.memo(({
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+    <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-4 sm:gap-6 mb-8">
       {charts.map((chart, idx) => (
         <ChartCardItem
           key={chart.id}

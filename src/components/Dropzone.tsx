@@ -144,7 +144,7 @@ export const Dropzone: React.FC<DropzoneProps> = ({ onDatasetLoaded }) => {
               <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
               <span>CLIENT-SIDE ANALYTICS WORKSPACE</span>
             </div>
-            <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight text-[var(--text-primary)] leading-[1.15]">
+            <h1 className="text-[length:var(--text-display)] font-semibold tracking-tight text-[var(--text-primary)] leading-[1.15]">
               Drop in raw data. Explore it at 60 FPS.
             </h1>
             <p className="text-sm text-[var(--text-muted)] max-w-xl leading-relaxed">

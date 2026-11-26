@@ -45,7 +45,7 @@ export const KpiRow: React.FC<KpiRowProps> = React.memo(({ cards }) => {
           </div>
 
           <div className="my-0.5">
-            <span className="text-2xl sm:text-[28px] font-semibold text-[var(--text-primary)] tracking-tight font-mono tabular-nums">
+            <span className="text-[length:var(--text-kpi)] font-semibold text-[var(--text-primary)] tracking-tight font-mono tabular-nums">
               {card.value}
             </span>
           </div>

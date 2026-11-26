@@ -88,7 +88,7 @@ export const SqlStudioModal: React.FC<SqlStudioModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-md font-sans"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-6 bg-black/80 backdrop-blur-md font-sans"
       onClick={onClose}
     >
       <div
@@ -98,7 +98,7 @@ export const SqlStudioModal: React.FC<SqlStudioModalProps> = ({
         aria-modal="true"
         aria-labelledby="sql-studio-title"
         onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-4xl max-h-[90vh] flex flex-col rounded-2xl bg-[#0f0f13] border border-zinc-800 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150 focus:outline-none"
+        className="relative w-full max-w-4xl max-h-[92dvh] flex flex-col rounded-t-2xl sm:rounded-2xl bg-[#0f0f13] border border-zinc-800 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150 focus:outline-none pb-safe sm:pb-0"
       >
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-800 bg-[#14141a]/80">

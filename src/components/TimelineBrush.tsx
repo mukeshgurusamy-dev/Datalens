@@ -236,14 +236,14 @@ export const TimelineBrush: React.FC<TimelineBrushProps> = ({
           style={{ left: `${leftPercent}%`, width: `${Math.max(widthPercent, 0.5)}%` }}
           onPointerDown={(e) => brush.onPointerDown(e, 'center')}
         >
-          {/* Left handle */}
+          {/* Left handle (44px touch hit target) */}
           <div
-            className="absolute left-0 top-0 bottom-0 w-1.5 bg-blue-500/70 hover:bg-blue-400 cursor-ew-resize rounded-l-sm transition-colors"
+            className="absolute left-0 top-0 bottom-0 w-2 bg-blue-500/80 hover:bg-blue-400 cursor-ew-resize rounded-l-sm transition-colors before:content-[''] before:absolute before:-inset-x-4 before:inset-y-0"
             onPointerDown={(e) => { e.stopPropagation(); brush.onPointerDown(e, 'left'); }}
           />
-          {/* Right handle */}
+          {/* Right handle (44px touch hit target) */}
           <div
-            className="absolute right-0 top-0 bottom-0 w-1.5 bg-blue-500/70 hover:bg-blue-400 cursor-ew-resize rounded-r-sm transition-colors"
+            className="absolute right-0 top-0 bottom-0 w-2 bg-blue-500/80 hover:bg-blue-400 cursor-ew-resize rounded-r-sm transition-colors before:content-[''] before:absolute before:-inset-x-4 before:inset-y-0"
             onPointerDown={(e) => { e.stopPropagation(); brush.onPointerDown(e, 'right'); }}
           />
         </div>

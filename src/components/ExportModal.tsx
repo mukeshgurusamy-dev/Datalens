@@ -210,7 +210,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
   return (
     <AnimatePresence>
       <div
-        className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/70 backdrop-blur-sm"
+        className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-6 bg-black/70 backdrop-blur-sm"
         onClick={onClose}
       >
         <motion.div
@@ -224,7 +224,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
           exit={{ opacity: 0, scale: 0.98, y: 8 }}
           transition={{ duration: 0.16, ease: 'easeOut' }}
           onClick={(e) => e.stopPropagation()}
-          className="w-full max-w-4xl bg-[var(--bg-surface)] border border-[var(--border-strong)] rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] focus:outline-none"
+          className="w-full max-w-4xl bg-[var(--bg-surface)] border border-[var(--border-strong)] rounded-t-2xl sm:rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[92dvh] focus:outline-none pb-safe sm:pb-0"
         >
           {/* Modal Header */}
           <div className="flex items-center justify-between px-5 py-3.5 border-b border-[var(--border-hairline)] bg-[var(--bg-elevated)]">

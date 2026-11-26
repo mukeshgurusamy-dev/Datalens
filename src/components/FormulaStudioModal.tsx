@@ -149,7 +149,7 @@ export const FormulaStudioModal: React.FC<FormulaStudioModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4"
       onClick={onClose}
     >
       <div
@@ -158,7 +158,7 @@ export const FormulaStudioModal: React.FC<FormulaStudioModalProps> = ({
         role="dialog"
         aria-modal="true"
         aria-labelledby="formula-studio-title"
-        className="bg-zinc-950 border border-zinc-800 rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col focus:outline-none"
+        className="bg-zinc-950 border border-zinc-800 rounded-t-2xl sm:rounded-2xl shadow-2xl w-full max-w-3xl max-h-[92dvh] overflow-hidden flex flex-col focus:outline-none pb-safe sm:pb-0"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

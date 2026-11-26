@@ -74,7 +74,8 @@ export const TimeTravelDrawer: React.FC<TimeTravelDrawerProps> = ({ onRestoreSna
   return (
     <div
       data-export-ignore="true"
-      className="fixed bottom-6 left-6 z-40 max-w-sm rounded-2xl bg-[#101014]/95 border border-zinc-800 shadow-2xl backdrop-blur-xl font-sans text-xs transition-all overflow-hidden"
+      className="fixed bottom-3 left-3 sm:bottom-6 sm:left-6 z-40 max-w-[calc(100vw-1.5rem)] sm:max-w-sm rounded-xl bg-[#101014]/95 border border-zinc-800 shadow-2xl backdrop-blur-xl font-sans text-xs transition-all overflow-hidden"
+      style={{ marginBottom: 'env(safe-area-inset-bottom)' }}
     >
       {/* Primary Toolbar Bar */}
       <div className="flex items-center gap-2 px-3 py-2 bg-[#14141a]/80">
