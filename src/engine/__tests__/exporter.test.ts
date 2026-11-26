@@ -92,4 +92,14 @@ describe('Boardroom Report Exporter - Automated Quality & Accuracy Suite', () =>
     expect(items).toContain('Search: "Amazon"');
     expect(items).toContain('region: North America, Europe');
   });
+
+  it('sanitizes Unicode symbols and currency into WinAnsi-safe ASCII for PDF rendering', async () => {
+    const { sanitizePdfText } = await import('../exporter');
+    expect(sanitizePdfText('Q3 — Growth • €1,200 ↔ ₹50,000…')).toBe(
+      'Q3 - Growth | EUR 1,200 <-> INR 50,000...'
+    );
+    expect(sanitizePdfText('“Smart Quotes” & Rocket 🚀')).toBe(
+      '"Smart Quotes" & Rocket '
+    );
+  });
 });

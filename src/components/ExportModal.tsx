@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from 'motion/react';
 import {
   X,
   FileText,
-  Image as ImageIcon,
   Download,
   CheckCircle2,
   AlertCircle,
@@ -15,7 +14,6 @@ import {
 } from 'lucide-react';
 import {
   exportFlexiblePdf,
-  exportFlexibleImage,
   exportDatasetAsExcel,
   exportRowsAsCsv,
   DEFAULT_REPORT_CUSTOMIZATION,
@@ -40,7 +38,7 @@ interface ExportModalProps {
   totalRowCount?: number;
 }
 
-type ExportTab = 'pdf' | 'image' | 'excel' | 'csv';
+type ExportTab = 'pdf' | 'excel' | 'csv';
 
 export const ExportModal: React.FC<ExportModalProps> = ({
   isOpen,
@@ -59,7 +57,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
 
   const [config, setConfig] = useState<ReportCustomization>({
     ...DEFAULT_REPORT_CUSTOMIZATION,
-    title: dataset.name ? `${dataset.name} — Executive Report` : 'Executive Analytics Report',
+    title: dataset.name ? `${dataset.name} - Executive Report` : 'Executive Analytics Report',
     selectedChartIds: charts.map((c) => c.id),
   });
 
@@ -67,7 +65,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
   useEffect(() => {
     setConfig((prev) => ({
       ...prev,
-      title: dataset.name ? `${dataset.name} — Executive Report` : 'Executive Analytics Report',
+      title: dataset.name ? `${dataset.name} - Executive Report` : 'Executive Analytics Report',
       selectedChartIds: charts.map((c) => c.id),
     }));
   }, [dataset.id, dataset.name, charts]);
@@ -137,30 +135,6 @@ export const ExportModal: React.FC<ExportModalProps> = ({
     }
   };
 
-  const handleExportImage = async () => {
-    setIsExporting(true);
-    setError(null);
-    setExportSuccess(null);
-
-    try {
-      await exportFlexibleImage({
-        dataset,
-        kpis,
-        charts,
-        filters,
-        totalRowCount,
-        config,
-      });
-      setExportSuccess(
-        `HD ${config.imageFormat.toUpperCase()} (${config.imageScale}x) downloaded!`
-      );
-    } catch (err: any) {
-      setError(err.message || 'Failed to generate HD Image');
-    } finally {
-      setIsExporting(false);
-    }
-  };
-
   const handleExportExcel = () => {
     setIsExporting(true);
     setError(null);
@@ -219,7 +193,17 @@ export const ExportModal: React.FC<ExportModalProps> = ({
     { key: 'includeDataSample', label: 'Data Sample Table' },
   ];
 
-  const isVisualTab = activeTab === 'pdf' || activeTab === 'image';
+  const includedSummary: string[] = [];
+  if (config.includeHeader) includedSummary.push('Header');
+  if (config.includeFilterScope) includedSummary.push('Filter Scope');
+  if (config.includeKpis && kpis.length > 0) includedSummary.push(`${kpis.length} KPIs`);
+  if (config.includeCharts && selectedChartSet.size > 0) {
+    includedSummary.push(`${selectedChartSet.size} Charts`);
+  }
+  if (config.includeColumnStats) includedSummary.push(`${dataset.columnCount} Col Stats`);
+  if (config.includeCorrelation && numericColCount >= 2) includedSummary.push('Correlations');
+  if (config.includeDataSample) includedSummary.push(`${config.dataSampleLimit} Sample Rows`);
+  if (config.customNotes?.trim()) includedSummary.push('Notes');
 
   return (
     <AnimatePresence>
@@ -248,10 +232,10 @@ export const ExportModal: React.FC<ExportModalProps> = ({
               </div>
               <div>
                 <h3 id="export-modal-title" className="text-sm font-semibold text-white tracking-tight">
-                  Report Builder &amp; Export
+                  Export Report &amp; Data
                 </h3>
                 <p className="text-[11px] text-zinc-400">
-                  Customize every section, chart, and detail for {dataset.name}
+                  Export customized PDF reports or raw filtered data for {dataset.name}
                 </p>
               </div>
             </div>
@@ -270,7 +254,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
           <div className="flex items-center border-b border-zinc-800/80 bg-zinc-950/60 px-6 overflow-x-auto text-xs font-medium">
             <button
               onClick={() => setActiveTab('pdf')}
-              className={`py-3 px-3.5 border-b-2 flex items-center gap-2 transition-all whitespace-nowrap ${
+              className={`py-3 px-4 border-b-2 flex items-center gap-2 transition-all whitespace-nowrap ${
                 activeTab === 'pdf'
                   ? 'border-blue-500 text-white font-semibold'
                   : 'border-transparent text-zinc-400 hover:text-zinc-200'
@@ -280,19 +264,8 @@ export const ExportModal: React.FC<ExportModalProps> = ({
               <span>PDF Report</span>
             </button>
             <button
-              onClick={() => setActiveTab('image')}
-              className={`py-3 px-3.5 border-b-2 flex items-center gap-2 transition-all whitespace-nowrap ${
-                activeTab === 'image'
-                  ? 'border-purple-500 text-white font-semibold'
-                  : 'border-transparent text-zinc-400 hover:text-zinc-200'
-              }`}
-            >
-              <ImageIcon className="w-4 h-4 text-purple-400" />
-              <span>HD Image</span>
-            </button>
-            <button
               onClick={() => setActiveTab('excel')}
-              className={`py-3 px-3.5 border-b-2 flex items-center gap-2 transition-all whitespace-nowrap ${
+              className={`py-3 px-4 border-b-2 flex items-center gap-2 transition-all whitespace-nowrap ${
                 activeTab === 'excel'
                   ? 'border-emerald-500 text-white font-semibold'
                   : 'border-transparent text-zinc-400 hover:text-zinc-200'
@@ -303,7 +276,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
             </button>
             <button
               onClick={() => setActiveTab('csv')}
-              className={`py-3 px-3.5 border-b-2 flex items-center gap-2 transition-all whitespace-nowrap ${
+              className={`py-3 px-4 border-b-2 flex items-center gap-2 transition-all whitespace-nowrap ${
                 activeTab === 'csv'
                   ? 'border-cyan-500 text-white font-semibold'
                   : 'border-transparent text-zinc-400 hover:text-zinc-200'
@@ -316,7 +289,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
 
           {/* Modal Content */}
           <div className="p-6 overflow-y-auto flex-1 space-y-5">
-            {isVisualTab && (
+            {activeTab === 'pdf' && (
               <div className="space-y-5">
                 {/* Report Metadata */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
@@ -379,9 +352,8 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                   </div>
                 </div>
 
-                {/* Format + Theme Settings */}
+                {/* Page & Theme Settings */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
-                  {/* Theme (Both PDF & HD Image) */}
                   <div>
                     <label className="text-[11px] font-mono text-zinc-400 uppercase block mb-1">
                       Report Theme
@@ -414,138 +386,72 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                     </div>
                   </div>
 
-                  {activeTab === 'pdf' ? (
-                    <>
-                      <div>
-                        <label className="text-[11px] font-mono text-zinc-400 uppercase block mb-1">
-                          Orientation
-                        </label>
-                        <div className="grid grid-cols-2 gap-1.5">
-                          <button
-                            type="button"
-                            onClick={() => setConfig({ ...config, orientation: 'landscape' })}
-                            className={`text-xs py-2 px-2 rounded-lg border font-medium transition-all ${
-                              config.orientation === 'landscape'
-                                ? 'bg-blue-600 text-white border-blue-500'
-                                : 'bg-zinc-900 text-zinc-400 border-zinc-750 hover:text-white'
-                            }`}
-                          >
-                            Landscape
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setConfig({ ...config, orientation: 'portrait' })}
-                            className={`text-xs py-2 px-2 rounded-lg border font-medium transition-all ${
-                              config.orientation === 'portrait'
-                                ? 'bg-blue-600 text-white border-blue-500'
-                                : 'bg-zinc-900 text-zinc-400 border-zinc-750 hover:text-white'
-                            }`}
-                          >
-                            Portrait
-                          </button>
-                        </div>
-                      </div>
+                  <div>
+                    <label className="text-[11px] font-mono text-zinc-400 uppercase block mb-1">
+                      Orientation
+                    </label>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => setConfig({ ...config, orientation: 'landscape' })}
+                        className={`text-xs py-2 px-2 rounded-lg border font-medium transition-all ${
+                          config.orientation === 'landscape'
+                            ? 'bg-blue-600 text-white border-blue-500'
+                            : 'bg-zinc-900 text-zinc-400 border-zinc-750 hover:text-white'
+                        }`}
+                      >
+                        Landscape
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setConfig({ ...config, orientation: 'portrait' })}
+                        className={`text-xs py-2 px-2 rounded-lg border font-medium transition-all ${
+                          config.orientation === 'portrait'
+                            ? 'bg-blue-600 text-white border-blue-500'
+                            : 'bg-zinc-900 text-zinc-400 border-zinc-750 hover:text-white'
+                        }`}
+                      >
+                        Portrait
+                      </button>
+                    </div>
+                  </div>
 
-                      <div>
-                        <label className="text-[11px] font-mono text-zinc-400 uppercase block mb-1">
-                          Paper Size
-                        </label>
-                        <div className="grid grid-cols-2 gap-1.5">
-                          <button
-                            type="button"
-                            onClick={() => setConfig({ ...config, paperSize: 'a4' })}
-                            className={`text-xs py-2 px-2 rounded-lg border font-medium transition-all ${
-                              config.paperSize === 'a4'
-                                ? 'bg-blue-600 text-white border-blue-500'
-                                : 'bg-zinc-900 text-zinc-400 border-zinc-750 hover:text-white'
-                            }`}
-                          >
-                            A4
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setConfig({ ...config, paperSize: 'letter' })}
-                            className={`text-xs py-2 px-2 rounded-lg border font-medium transition-all ${
-                              config.paperSize === 'letter'
-                                ? 'bg-blue-600 text-white border-blue-500'
-                                : 'bg-zinc-900 text-zinc-400 border-zinc-750 hover:text-white'
-                            }`}
-                          >
-                            Letter
-                          </button>
-                        </div>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <div>
-                        <label className="text-[11px] font-mono text-zinc-400 uppercase block mb-1">
-                          Image Format
-                        </label>
-                        <div className="grid grid-cols-2 gap-1.5">
-                          <button
-                            type="button"
-                            onClick={() => setConfig({ ...config, imageFormat: 'png' })}
-                            className={`text-xs py-2 px-2 rounded-lg border font-medium transition-all ${
-                              config.imageFormat === 'png'
-                                ? 'bg-purple-600 text-white border-purple-500'
-                                : 'bg-zinc-900 text-zinc-400 border-zinc-750 hover:text-white'
-                            }`}
-                          >
-                            PNG
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setConfig({ ...config, imageFormat: 'jpeg' })}
-                            className={`text-xs py-2 px-2 rounded-lg border font-medium transition-all ${
-                              config.imageFormat === 'jpeg'
-                                ? 'bg-purple-600 text-white border-purple-500'
-                                : 'bg-zinc-900 text-zinc-400 border-zinc-750 hover:text-white'
-                            }`}
-                          >
-                            JPEG
-                          </button>
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="text-[11px] font-mono text-zinc-400 uppercase block mb-1">
-                          Resolution
-                        </label>
-                        <div className="grid grid-cols-2 gap-1.5">
-                          <button
-                            type="button"
-                            onClick={() => setConfig({ ...config, imageScale: 2 })}
-                            className={`text-xs py-2 px-2 rounded-lg border font-medium transition-all ${
-                              config.imageScale === 2
-                                ? 'bg-purple-600 text-white border-purple-500'
-                                : 'bg-zinc-900 text-zinc-400 border-zinc-750 hover:text-white'
-                            }`}
-                          >
-                            2x Retina
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setConfig({ ...config, imageScale: 3 })}
-                            className={`text-xs py-2 px-2 rounded-lg border font-medium transition-all ${
-                              config.imageScale === 3
-                                ? 'bg-purple-600 text-white border-purple-500'
-                                : 'bg-zinc-900 text-zinc-400 border-zinc-750 hover:text-white'
-                            }`}
-                          >
-                            3x Ultra-HD
-                          </button>
-                        </div>
-                      </div>
-                    </>
-                  )}
+                  <div>
+                    <label className="text-[11px] font-mono text-zinc-400 uppercase block mb-1">
+                      Paper Size
+                    </label>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => setConfig({ ...config, paperSize: 'a4' })}
+                        className={`text-xs py-2 px-2 rounded-lg border font-medium transition-all ${
+                          config.paperSize === 'a4'
+                            ? 'bg-blue-600 text-white border-blue-500'
+                            : 'bg-zinc-900 text-zinc-400 border-zinc-750 hover:text-white'
+                        }`}
+                      >
+                        A4
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setConfig({ ...config, paperSize: 'letter' })}
+                        className={`text-xs py-2 px-2 rounded-lg border font-medium transition-all ${
+                          config.paperSize === 'letter'
+                            ? 'bg-blue-600 text-white border-blue-500'
+                            : 'bg-zinc-900 text-zinc-400 border-zinc-750 hover:text-white'
+                        }`}
+                      >
+                        Letter
+                      </button>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Included Sections Builder */}
                 <div className="p-4 rounded-xl bg-zinc-900/50 border border-zinc-800 space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] font-mono text-zinc-400 uppercase">
-                      Sections Included in {activeTab === 'pdf' ? 'PDF' : 'HD Image'}
+                      Sections Included in PDF
                     </span>
                     <div className="flex items-center gap-2 text-[11px]">
                       <button
@@ -649,38 +555,29 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                     rows={2}
                     value={config.customNotes || ''}
                     onChange={(e) => setConfig({ ...config, customNotes: e.target.value })}
-                    placeholder="Add executive summary notes, key findings, or recommendations to embed in the report..."
+                    placeholder="Add executive summary notes, key findings, or recommendations to embed in the PDF..."
                     className="w-full text-xs bg-zinc-900 border border-zinc-750 text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none"
                   />
                 </div>
 
-                {/* Export Button */}
-                <div className="pt-1">
-                  {activeTab === 'pdf' ? (
-                    <button
-                      onClick={handleExportPdf}
-                      disabled={isExporting}
-                      className="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold flex items-center justify-center gap-2 transition-all disabled:opacity-50 shadow-sm shadow-blue-500/20"
-                    >
-                      <FileText className="w-4 h-4" />
-                      <span>
-                        {isExporting ? 'Compiling Vector PDF...' : 'Download Executive PDF Report'}
-                      </span>
-                    </button>
-                  ) : (
-                    <button
-                      onClick={handleExportImage}
-                      disabled={isExporting}
-                      className="w-full py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold flex items-center justify-center gap-2 transition-all disabled:opacity-50 shadow-sm shadow-purple-500/20"
-                    >
-                      <ImageIcon className="w-4 h-4" />
-                      <span>
-                        {isExporting
-                          ? 'Rendering HD Image...'
-                          : `Download ${config.imageScale}x HD ${config.imageFormat.toUpperCase()} Report`}
-                      </span>
-                    </button>
-                  )}
+                {/* Live Summary + Export Button */}
+                <div className="space-y-2.5">
+                  <div className="text-[11px] font-mono text-zinc-400 bg-zinc-900/40 border border-zinc-800/80 rounded-lg px-3 py-2">
+                    Included:{' '}
+                    <span className="text-zinc-200">
+                      {includedSummary.length > 0 ? includedSummary.join(' • ') : 'No sections selected'}
+                    </span>
+                  </div>
+                  <button
+                    onClick={handleExportPdf}
+                    disabled={isExporting || includedSummary.length === 0}
+                    className="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold flex items-center justify-center gap-2 transition-all disabled:opacity-50 shadow-sm shadow-blue-500/20"
+                  >
+                    <FileText className="w-4 h-4" />
+                    <span>
+                      {isExporting ? 'Compiling Vector PDF...' : 'Download Executive PDF Report'}
+                    </span>
+                  </button>
                 </div>
               </div>
             )}

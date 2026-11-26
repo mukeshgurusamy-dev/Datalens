@@ -206,7 +206,7 @@ describe('React Dashboard Components', () => {
     );
   });
 
-  it('ExportModal provides unified section toggles, theme, and format options for PDF & HD Image', () => {
+  it('ExportModal provides PDF Report, Excel, and CSV tabs with full PDF section controls and no image tab', () => {
     const charts: ChartRecommendation[] = [
       {
         id: 'chart-1',
@@ -232,16 +232,15 @@ describe('React Dashboard Components', () => {
     );
 
     expect(screen.getByRole('dialog')).toHaveAttribute('aria-modal', 'true');
+    expect(screen.getByRole('button', { name: /^PDF Report$/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Excel \(\.xlsx\)/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Filtered CSV/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /HD Image/i })).not.toBeInTheDocument();
+
     expect(screen.getByText('Header & Metadata')).toBeInTheDocument();
     expect(screen.getByText('Active Filter Scope')).toBeInTheDocument();
     expect(screen.getByText('Data Sample Table')).toBeInTheDocument();
     expect(screen.getByText('Revenue by Region')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Download Executive PDF Report/i })).toBeInTheDocument();
-
-    // Switch to HD Image tab and verify resolution/format controls
-    fireEvent.click(screen.getByRole('button', { name: /HD Image/i }));
-    expect(screen.getByRole('button', { name: /3x Ultra-HD/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /JPEG/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Download 2x HD PNG Report/i })).toBeInTheDocument();
   });
 });
