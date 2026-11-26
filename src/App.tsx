@@ -1,4 +1,5 @@
 import { useState, useCallback, lazy, Suspense, Profiler, type ProfilerOnRenderCallback } from 'react';
+import { MotionConfig, motion, AnimatePresence } from 'motion/react';
 import { Header } from './components/Header';
 import { Dropzone } from './components/Dropzone';
 import { FilterBar } from './components/FilterBar';
@@ -8,6 +9,7 @@ import { DataTable } from './components/DataTable';
 import { TimeTravelDrawer } from './components/TimeTravelDrawer';
 import { CardErrorBoundary } from './components/CardErrorBoundary';
 import { TimelineBrush } from './components/TimelineBrush';
+import { FLUID_SPRING, ScrollReveal } from './components/MotionPrimitives';
 import { useDashboardState } from './hooks/useDashboardState';
 import { telemetryStore } from './engine/telemetry-store';
 import { LayoutGrid, Table2, SlidersHorizontal, RefreshCw } from 'lucide-react';
@@ -115,6 +117,7 @@ export function App() {
   );
 
   return (
+    <MotionConfig reducedMotion="user">
     <div className="min-h-screen bg-[var(--bg-canvas)] text-[var(--text-primary)] flex flex-col font-sans">
       <Header
         dataset={dataset}
@@ -157,47 +160,42 @@ export function App() {
                 </p>
               </div>
 
-              {/* Workspace Tabs */}
+              {/* Workspace Tabs with Shared-Element Fluid Pill */}
               <nav
                 aria-label="Workspace views"
                 className="inline-flex items-center bg-[var(--bg-surface)] border border-[var(--border-hairline)] rounded-lg p-1 text-xs font-medium self-start"
               >
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('overview')}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-colors ${
-                    activeTab === 'overview'
-                      ? 'bg-[var(--bg-elevated)] text-[var(--text-primary)] border border-[var(--border-hairline)]'
-                      : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] border border-transparent'
-                  }`}
-                >
-                  <LayoutGrid className="w-3.5 h-3.5" />
-                  <span>Overview</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('data')}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-colors ${
-                    activeTab === 'data'
-                      ? 'bg-[var(--bg-elevated)] text-[var(--text-primary)] border border-[var(--border-hairline)]'
-                      : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] border border-transparent'
-                  }`}
-                >
-                  <Table2 className="w-3.5 h-3.5" />
-                  <span>Data Explorer</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('modeling')}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-colors ${
-                    activeTab === 'modeling'
-                      ? 'bg-[var(--bg-elevated)] text-[var(--text-primary)] border border-[var(--border-hairline)]'
-                      : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] border border-transparent'
-                  }`}
-                >
-                  <SlidersHorizontal className="w-3.5 h-3.5" />
-                  <span>Modeling &amp; Matrix</span>
-                </button>
+                {(
+                  [
+                    { id: 'overview', label: 'Overview', Icon: LayoutGrid },
+                    { id: 'data', label: 'Data Explorer', Icon: Table2 },
+                    { id: 'modeling', label: 'Modeling & Matrix', Icon: SlidersHorizontal },
+                  ] as const
+                ).map(({ id, label, Icon }) => {
+                  const isActive = activeTab === id;
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      onClick={() => setActiveTab(id)}
+                      className={`relative inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-colors ${
+                        isActive
+                          ? 'text-[var(--text-primary)]'
+                          : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+                      }`}
+                    >
+                      {isActive && (
+                        <motion.span
+                          layoutId="workspace-tab-pill"
+                          transition={FLUID_SPRING}
+                          className="absolute inset-0 rounded-md bg-[var(--bg-elevated)] border border-[var(--border-hairline)]"
+                        />
+                      )}
+                      <Icon className="w-3.5 h-3.5 relative z-10" />
+                      <span className="relative z-10">{label}</span>
+                    </button>
+                  );
+                })}
               </nav>
             </div>
 
@@ -214,61 +212,89 @@ export function App() {
               </div>
             )}
 
-            {/* Overview Tab: Timeline Brush, KPIs, Visualizations */}
-            {activeTab === 'overview' && (
-              <>
-                {dateColumnName && (
-                  <div data-export-ignore="true">
-                    <CardErrorBoundary fallbackTitle="Timeline Brush Anomaly">
-                      <TimelineBrush
-                        dataset={dataset}
-                        dateColumnName={dateColumnName}
-                        onRangeChange={handleDateRangeChange}
-                      />
+            {/* Tab Content with Smooth Workspace Transition */}
+            <AnimatePresence mode="wait">
+              {activeTab === 'overview' && (
+                <motion.div
+                  key="tab-overview"
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  transition={{ duration: 0.16, ease: 'easeOut' }}
+                >
+                  {dateColumnName && (
+                    <div data-export-ignore="true">
+                      <CardErrorBoundary fallbackTitle="Timeline Brush Anomaly">
+                        <TimelineBrush
+                          dataset={dataset}
+                          dateColumnName={dateColumnName}
+                          onRangeChange={handleDateRangeChange}
+                        />
+                      </CardErrorBoundary>
+                    </div>
+                  )}
+
+                  <Profiler id="DataLensCanvas" onRender={handleProfilerRender}>
+                    <div id="dashboard-printable-area" className="rounded-xl">
+                      <CardErrorBoundary fallbackTitle="Executive KPI Anomaly">
+                        <KpiRow cards={kpis} />
+                      </CardErrorBoundary>
+
+                      <CardErrorBoundary fallbackTitle="Visualization Engine Anomaly">
+                        <ChartGrid
+                          charts={charts}
+                          onCustomizeChart={setEditingChart}
+                          onCrossFilter={handleCrossFilter}
+                          activeFilters={filters.selectedCategories}
+                        />
+                      </CardErrorBoundary>
+                    </div>
+                  </Profiler>
+                </motion.div>
+              )}
+
+              {activeTab === 'data' && activeDataset && (
+                <motion.div
+                  key="tab-data"
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  transition={{ duration: 0.16, ease: 'easeOut' }}
+                >
+                  <ScrollReveal>
+                    <CardErrorBoundary fallbackTitle="Data Grid Anomaly">
+                      <DataTable dataset={activeDataset} />
                     </CardErrorBoundary>
-                  </div>
-                )}
+                  </ScrollReveal>
+                </motion.div>
+              )}
 
-                <Profiler id="DataLensCanvas" onRender={handleProfilerRender}>
-                  <div id="dashboard-printable-area" className="rounded-xl">
-                    <CardErrorBoundary fallbackTitle="Executive KPI Anomaly">
-                      <KpiRow cards={kpis} />
-                    </CardErrorBoundary>
+              {activeTab === 'modeling' && activeDataset && (
+                <motion.div
+                  key="tab-modeling"
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  transition={{ duration: 0.16, ease: 'easeOut' }}
+                >
+                  <Suspense fallback={null}>
+                    <div className="space-y-6">
+                      <ScrollReveal>
+                        <CardErrorBoundary fallbackTitle="Scenario Simulator Anomaly">
+                          <ScenarioSimulator dataset={activeDataset} />
+                        </CardErrorBoundary>
+                      </ScrollReveal>
 
-                    <CardErrorBoundary fallbackTitle="Visualization Engine Anomaly">
-                      <ChartGrid
-                        charts={charts}
-                        onCustomizeChart={setEditingChart}
-                        onCrossFilter={handleCrossFilter}
-                        activeFilters={filters.selectedCategories}
-                      />
-                    </CardErrorBoundary>
-                  </div>
-                </Profiler>
-              </>
-            )}
-
-            {/* Data Explorer Tab: 60 FPS Virtualized Table */}
-            {activeTab === 'data' && activeDataset && (
-              <CardErrorBoundary fallbackTitle="Data Grid Anomaly">
-                <DataTable dataset={activeDataset} />
-              </CardErrorBoundary>
-            )}
-
-            {/* Modeling & Matrix Tab: What-If Simulator & Correlation Matrix */}
-            {activeTab === 'modeling' && activeDataset && (
-              <Suspense fallback={null}>
-                <div className="space-y-6">
-                  <CardErrorBoundary fallbackTitle="Scenario Simulator Anomaly">
-                    <ScenarioSimulator dataset={activeDataset} />
-                  </CardErrorBoundary>
-
-                  <CardErrorBoundary fallbackTitle="Correlation Matrix Anomaly">
-                    <CorrelationMatrix dataset={activeDataset} />
-                  </CardErrorBoundary>
-                </div>
-              </Suspense>
-            )}
+                      <ScrollReveal delay={0.06}>
+                        <CardErrorBoundary fallbackTitle="Correlation Matrix Anomaly">
+                          <CorrelationMatrix dataset={activeDataset} />
+                        </CardErrorBoundary>
+                      </ScrollReveal>
+                    </div>
+                  </Suspense>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             {/* Lazy-loaded Modals & Overlays */}
             <Suspense fallback={null}>
@@ -347,6 +373,7 @@ export function App() {
         <p>DataLens — Browser-Native Analytics Studio</p>
       </footer>
     </div>
+    </MotionConfig>
   );
 }
 

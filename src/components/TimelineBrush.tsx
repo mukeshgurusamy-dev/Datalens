@@ -14,6 +14,7 @@
  */
 
 import React, { useRef, useCallback, useMemo } from 'react';
+import { motion } from 'motion/react';
 import { Calendar, ZoomIn } from 'lucide-react';
 import { useTimelineBrush } from '../hooks/useTimelineBrush';
 import { parseNumberValue } from '../engine/profiler';
@@ -199,16 +200,22 @@ export const TimelineBrush: React.FC<TimelineBrushProps> = ({
             preserveAspectRatio="none"
             className="absolute inset-0 w-full h-full"
           >
-            <path
+            <motion.path
               d={sparklinePath}
               fill="none"
-              stroke="rgba(59, 130, 246, 0.4)"
-              strokeWidth="1"
+              stroke="rgba(59, 130, 246, 0.45)"
+              strokeWidth="1.2"
               vectorEffect="non-scaling-stroke"
+              initial={{ pathLength: 0, opacity: 0 }}
+              animate={{ pathLength: 1, opacity: 1 }}
+              transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
             />
-            <path
+            <motion.path
               d={sparklinePath + ` L100,100 L0,100 Z`}
               fill="rgba(59, 130, 246, 0.08)"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.15 }}
             />
           </svg>
         )}

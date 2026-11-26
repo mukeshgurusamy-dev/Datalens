@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion } from 'motion/react';
 import {
   BarChart3,
   RefreshCw,
@@ -8,6 +9,7 @@ import {
   Terminal,
   Calculator,
 } from 'lucide-react';
+import { FLUID_SPRING, ScrollProgressBar } from './MotionPrimitives';
 import type { DatasetSchema } from '../types/dataset';
 import type { ExecutiveLens } from '../engine/personas';
 
@@ -69,22 +71,32 @@ export const Header: React.FC<HeaderProps> = React.memo(({
         <div className="flex items-center gap-2">
           {dataset && (
             <>
-              {/* Segmented Executive Lens */}
+              {/* Segmented Executive Lens with Fluid Shared-Element Pill */}
               {onPersonaChange && (
                 <div className="hidden lg:flex items-center bg-[var(--bg-surface)] border border-[var(--border-hairline)] rounded-lg p-0.5 text-[11px] font-mono">
-                  {(['cfo', 'coo', 'cmo'] as ExecutiveLens[]).map((p) => (
-                    <button
-                      key={p}
-                      onClick={() => onPersonaChange(p)}
-                      className={`px-2.5 py-1 rounded-md transition-colors uppercase ${
-                        activePersona === p
-                          ? 'bg-[var(--bg-elevated)] text-[var(--text-primary)] font-semibold border border-[var(--border-hairline)]'
-                          : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] border border-transparent'
-                      }`}
-                    >
-                      {p}
-                    </button>
-                  ))}
+                  {(['cfo', 'coo', 'cmo'] as ExecutiveLens[]).map((p) => {
+                    const isActive = activePersona === p;
+                    return (
+                      <button
+                        key={p}
+                        onClick={() => onPersonaChange(p)}
+                        className={`relative px-2.5 py-1 rounded-md transition-colors uppercase ${
+                          isActive
+                            ? 'text-[var(--text-primary)] font-semibold'
+                            : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+                        }`}
+                      >
+                        {isActive && (
+                          <motion.span
+                            layoutId="persona-lens-pill"
+                            transition={FLUID_SPRING}
+                            className="absolute inset-0 rounded-md bg-[var(--bg-elevated)] border border-[var(--border-hairline)]"
+                          />
+                        )}
+                        <span className="relative z-10">{p}</span>
+                      </button>
+                    );
+                  })}
                 </div>
               )}
 
@@ -171,6 +183,7 @@ export const Header: React.FC<HeaderProps> = React.memo(({
           )}
         </div>
       </div>
+      {dataset && <ScrollProgressBar />}
     </header>
   );
 });

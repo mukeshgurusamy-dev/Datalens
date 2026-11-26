@@ -28,6 +28,7 @@ import type {
   KpiCard,
 } from '../types/dataset';
 import { useModalAccessibility } from '../hooks/useModalAccessibility';
+import { FLUID_SPRING } from './MotionPrimitives';
 
 interface ExportModalProps {
   isOpen: boolean;
@@ -247,42 +248,37 @@ export const ExportModal: React.FC<ExportModalProps> = ({
             <div className="flex items-center gap-3">
               {/* Segmented Format Switcher */}
               <div className="hidden sm:inline-flex items-center bg-[var(--bg-surface)] border border-[var(--border-hairline)] rounded-lg p-0.5 text-xs font-medium">
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('pdf')}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-md transition-colors ${
-                    activeTab === 'pdf'
-                      ? 'bg-[var(--bg-elevated)] text-[var(--text-primary)] border border-[var(--border-hairline)]'
-                      : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] border border-transparent'
-                  }`}
-                >
-                  <FileText className="w-3.5 h-3.5" />
-                  <span>PDF Report</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('excel')}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-md transition-colors ${
-                    activeTab === 'excel'
-                      ? 'bg-[var(--bg-elevated)] text-[var(--text-primary)] border border-[var(--border-hairline)]'
-                      : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] border border-transparent'
-                  }`}
-                >
-                  <FileSpreadsheet className="w-3.5 h-3.5" />
-                  <span>Excel (.xlsx)</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('csv')}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-md transition-colors ${
-                    activeTab === 'csv'
-                      ? 'bg-[var(--bg-elevated)] text-[var(--text-primary)] border border-[var(--border-hairline)]'
-                      : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] border border-transparent'
-                  }`}
-                >
-                  <Layers className="w-3.5 h-3.5" />
-                  <span>Filtered CSV</span>
-                </button>
+                {(
+                  [
+                    { id: 'pdf', label: 'PDF Report', Icon: FileText },
+                    { id: 'excel', label: 'Excel (.xlsx)', Icon: FileSpreadsheet },
+                    { id: 'csv', label: 'Filtered CSV', Icon: Layers },
+                  ] as const
+                ).map(({ id, label, Icon }) => {
+                  const isActive = activeTab === id;
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      onClick={() => setActiveTab(id)}
+                      className={`relative inline-flex items-center gap-1.5 px-3 py-1 rounded-md transition-colors ${
+                        isActive
+                          ? 'text-[var(--text-primary)]'
+                          : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+                      }`}
+                    >
+                      {isActive && (
+                        <motion.span
+                          layoutId="export-tab-pill"
+                          transition={FLUID_SPRING}
+                          className="absolute inset-0 rounded-md bg-[var(--bg-elevated)] border border-[var(--border-hairline)]"
+                        />
+                      )}
+                      <Icon className="w-3.5 h-3.5 relative z-10" />
+                      <span className="relative z-10">{label}</span>
+                    </button>
+                  );
+                })}
               </div>
 
               <button

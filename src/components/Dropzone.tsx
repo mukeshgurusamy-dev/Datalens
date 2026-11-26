@@ -13,6 +13,7 @@ import {
   Terminal,
 } from 'lucide-react';
 import { SAMPLES } from '../data/samples';
+import { ScrollReveal } from './MotionPrimitives';
 import { parseCSV, parseExcel, parseJSON, parseClipboardSpreadsheet } from '../engine/parser';
 import { profileDataset } from '../engine/profiler';
 import { fetchExternalCsv } from '../engine/permalink';
@@ -255,20 +256,22 @@ export const Dropzone: React.FC<DropzoneProps> = ({ onDatasetLoaded }) => {
           </AnimatePresence>
 
           {/* Architectural Trust Strip */}
-          <div className="grid grid-cols-3 gap-3 pt-2">
-            <div className="flex items-center gap-2 text-xs text-[var(--text-muted)]">
-              <Shield className="w-3.5 h-3.5 text-[var(--text-secondary)] shrink-0" />
-              <span>100% Local Memory</span>
+          <ScrollReveal delay={0.08}>
+            <div className="grid grid-cols-3 gap-3 pt-2">
+              <div className="flex items-center gap-2 text-xs text-[var(--text-muted)]">
+                <Shield className="w-3.5 h-3.5 text-[var(--text-secondary)] shrink-0" />
+                <span>100% Local Memory</span>
+              </div>
+              <div className="flex items-center gap-2 text-xs text-[var(--text-muted)]">
+                <Cpu className="w-3.5 h-3.5 text-[var(--text-secondary)] shrink-0" />
+                <span>Web Worker Compute</span>
+              </div>
+              <div className="flex items-center gap-2 text-xs text-[var(--text-muted)]">
+                <Terminal className="w-3.5 h-3.5 text-[var(--text-secondary)] shrink-0" />
+                <span>In-Memory SQL AST</span>
+              </div>
             </div>
-            <div className="flex items-center gap-2 text-xs text-[var(--text-muted)]">
-              <Cpu className="w-3.5 h-3.5 text-[var(--text-secondary)] shrink-0" />
-              <span>Web Worker Compute</span>
-            </div>
-            <div className="flex items-center gap-2 text-xs text-[var(--text-muted)]">
-              <Terminal className="w-3.5 h-3.5 text-[var(--text-secondary)] shrink-0" />
-              <span>In-Memory SQL AST</span>
-            </div>
-          </div>
+          </ScrollReveal>
         </motion.div>
 
         {/* Right: Structured Sample Datasets Rail */}
