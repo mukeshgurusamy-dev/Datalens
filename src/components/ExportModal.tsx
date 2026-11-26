@@ -16,6 +16,7 @@ import {
   exportFlexiblePdf,
   exportDatasetAsExcel,
   exportRowsAsCsv,
+  buildFilterScopeItems,
   DEFAULT_REPORT_CUSTOMIZATION,
   type ReportCustomization,
 } from '../engine/exporter';
@@ -61,7 +62,6 @@ export const ExportModal: React.FC<ExportModalProps> = ({
     selectedChartIds: charts.map((c) => c.id),
   });
 
-  // Sync default title and chart selection when dataset or charts change
   useEffect(() => {
     setConfig((prev) => ({
       ...prev,
@@ -74,6 +74,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
 
   const selectedChartSet = new Set(config.selectedChartIds ?? charts.map((c) => c.id));
   const numericColCount = dataset.columns.filter((c) => c.type === 'number').length;
+  const scopeItems = buildFilterScopeItems(dataset, filters, totalRowCount);
 
   const toggleChartId = (id: string) => {
     const next = new Set(selectedChartSet);
@@ -127,9 +128,9 @@ export const ExportModal: React.FC<ExportModalProps> = ({
         totalRowCount,
         config,
       });
-      setExportSuccess('Executive PDF Report downloaded!');
+      setExportSuccess('Executive PDF Report downloaded.');
     } catch (err: any) {
-      setError(err.message || 'Failed to generate PDF report');
+      setError(err.message || 'Failed to generate PDF report.');
     } finally {
       setIsExporting(false);
     }
@@ -147,9 +148,9 @@ export const ExportModal: React.FC<ExportModalProps> = ({
           ? computeCorrelationMatrix(dataset.rows, numericCols).strongestPairs
           : [];
       exportDatasetAsExcel(dataset, kpis, pairs);
-      setExportSuccess('Multi-sheet Excel workbook (.xlsx) downloaded!');
+      setExportSuccess('Excel workbook (.xlsx) downloaded.');
     } catch (err: any) {
-      setError(err.message || 'Failed to generate Excel workbook');
+      setError(err.message || 'Failed to generate Excel workbook.');
     } finally {
       setIsExporting(false);
     }
@@ -162,9 +163,9 @@ export const ExportModal: React.FC<ExportModalProps> = ({
 
     try {
       exportRowsAsCsv(dataset.rows, dataset.name);
-      setExportSuccess(`Filtered CSV (${dataset.rows.length.toLocaleString()} rows) downloaded!`);
+      setExportSuccess(`Filtered CSV (${dataset.rows.length.toLocaleString()} rows) downloaded.`);
     } catch (err: any) {
-      setError(err.message || 'Failed to generate CSV file');
+      setError(err.message || 'Failed to generate CSV file.');
     } finally {
       setIsExporting(false);
     }
@@ -193,22 +194,22 @@ export const ExportModal: React.FC<ExportModalProps> = ({
     { key: 'includeDataSample', label: 'Data Sample Table' },
   ];
 
-  const includedSummary: string[] = [];
-  if (config.includeHeader) includedSummary.push('Header');
-  if (config.includeFilterScope) includedSummary.push('Filter Scope');
-  if (config.includeKpis && kpis.length > 0) includedSummary.push(`${kpis.length} KPIs`);
-  if (config.includeCharts && selectedChartSet.size > 0) {
-    includedSummary.push(`${selectedChartSet.size} Charts`);
-  }
-  if (config.includeColumnStats) includedSummary.push(`${dataset.columnCount} Col Stats`);
-  if (config.includeCorrelation && numericColCount >= 2) includedSummary.push('Correlations');
-  if (config.includeDataSample) includedSummary.push(`${config.dataSampleLimit} Sample Rows`);
-  if (config.customNotes?.trim()) includedSummary.push('Notes');
+  const hasAnySection =
+    config.includeHeader ||
+    config.includeFilterScope ||
+    (config.includeKpis && kpis.length > 0) ||
+    (config.includeCharts && selectedChartSet.size > 0) ||
+    config.includeColumnStats ||
+    (config.includeCorrelation && numericColCount >= 2) ||
+    config.includeDataSample ||
+    Boolean(config.customNotes?.trim());
+
+  const isPreviewDark = config.theme === 'dark';
 
   return (
     <AnimatePresence>
       <div
-        className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-md"
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/70 backdrop-blur-sm"
         onClick={onClose}
       >
         <motion.div
@@ -217,365 +218,548 @@ export const ExportModal: React.FC<ExportModalProps> = ({
           role="dialog"
           aria-modal="true"
           aria-labelledby="export-modal-title"
-          initial={{ opacity: 0, scale: 0.95, y: 10 }}
+          initial={{ opacity: 0, scale: 0.98, y: 8 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: 10 }}
-          transition={{ type: 'spring', stiffness: 350, damping: 25 }}
+          exit={{ opacity: 0, scale: 0.98, y: 8 }}
+          transition={{ duration: 0.16, ease: 'easeOut' }}
           onClick={(e) => e.stopPropagation()}
-          className="w-full max-w-3xl bg-[#0f0f13] border border-zinc-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] focus:outline-none"
+          className="w-full max-w-4xl bg-[var(--bg-surface)] border border-[var(--border-strong)] rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] focus:outline-none"
         >
-          {/* Header */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-800 bg-[#14141a]/90">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-xl bg-blue-600/15 border border-blue-500/25 flex items-center justify-center text-blue-400">
+          {/* Modal Header */}
+          <div className="flex items-center justify-between px-5 py-3.5 border-b border-[var(--border-hairline)] bg-[var(--bg-elevated)]">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-8 h-8 rounded-lg bg-[var(--bg-surface)] border border-[var(--border-hairline)] flex items-center justify-center text-[var(--text-primary)] shrink-0">
                 <Download className="w-4 h-4" />
               </div>
-              <div>
-                <h3 id="export-modal-title" className="text-sm font-semibold text-white tracking-tight">
+              <div className="min-w-0">
+                <h3
+                  id="export-modal-title"
+                  className="text-sm font-semibold text-[var(--text-primary)] tracking-tight truncate"
+                >
                   Export Report &amp; Data
                 </h3>
-                <p className="text-[11px] text-zinc-400">
-                  Export customized PDF reports or raw filtered data for {dataset.name}
+                <p className="text-xs text-[var(--text-muted)] truncate">
+                  {dataset.name} • {dataset.rowCount.toLocaleString()} active rows
                 </p>
               </div>
             </div>
 
-            <button
-              onClick={onClose}
-              disabled={isExporting}
-              aria-label="Close modal"
-              className="text-zinc-400 hover:text-white p-1.5 rounded-lg hover:bg-zinc-800 transition-colors disabled:opacity-50"
-            >
-              <X className="w-4 h-4" />
-            </button>
+            <div className="flex items-center gap-3">
+              {/* Segmented Format Switcher */}
+              <div className="hidden sm:inline-flex items-center bg-[var(--bg-surface)] border border-[var(--border-hairline)] rounded-lg p-0.5 text-xs font-medium">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('pdf')}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-md transition-colors ${
+                    activeTab === 'pdf'
+                      ? 'bg-[var(--bg-elevated)] text-[var(--text-primary)] border border-[var(--border-hairline)]'
+                      : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] border border-transparent'
+                  }`}
+                >
+                  <FileText className="w-3.5 h-3.5" />
+                  <span>PDF Report</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('excel')}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-md transition-colors ${
+                    activeTab === 'excel'
+                      ? 'bg-[var(--bg-elevated)] text-[var(--text-primary)] border border-[var(--border-hairline)]'
+                      : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] border border-transparent'
+                  }`}
+                >
+                  <FileSpreadsheet className="w-3.5 h-3.5" />
+                  <span>Excel (.xlsx)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('csv')}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-md transition-colors ${
+                    activeTab === 'csv'
+                      ? 'bg-[var(--bg-elevated)] text-[var(--text-primary)] border border-[var(--border-hairline)]'
+                      : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] border border-transparent'
+                  }`}
+                >
+                  <Layers className="w-3.5 h-3.5" />
+                  <span>Filtered CSV</span>
+                </button>
+              </div>
+
+              <button
+                onClick={onClose}
+                disabled={isExporting}
+                aria-label="Close modal"
+                className="text-[var(--text-muted)] hover:text-[var(--text-primary)] p-1.5 rounded-lg hover:bg-[var(--bg-surface)] transition-colors disabled:opacity-50"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
           </div>
 
-          {/* Format Tabs */}
-          <div className="flex items-center border-b border-zinc-800/80 bg-zinc-950/60 px-6 overflow-x-auto text-xs font-medium">
-            <button
-              onClick={() => setActiveTab('pdf')}
-              className={`py-3 px-4 border-b-2 flex items-center gap-2 transition-all whitespace-nowrap ${
-                activeTab === 'pdf'
-                  ? 'border-blue-500 text-white font-semibold'
-                  : 'border-transparent text-zinc-400 hover:text-zinc-200'
-              }`}
-            >
-              <FileText className="w-4 h-4 text-blue-400" />
-              <span>PDF Report</span>
-            </button>
-            <button
-              onClick={() => setActiveTab('excel')}
-              className={`py-3 px-4 border-b-2 flex items-center gap-2 transition-all whitespace-nowrap ${
-                activeTab === 'excel'
-                  ? 'border-emerald-500 text-white font-semibold'
-                  : 'border-transparent text-zinc-400 hover:text-zinc-200'
-              }`}
-            >
-              <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
-              <span>Excel (.xlsx)</span>
-            </button>
-            <button
-              onClick={() => setActiveTab('csv')}
-              className={`py-3 px-4 border-b-2 flex items-center gap-2 transition-all whitespace-nowrap ${
-                activeTab === 'csv'
-                  ? 'border-cyan-500 text-white font-semibold'
-                  : 'border-transparent text-zinc-400 hover:text-zinc-200'
-              }`}
-            >
-              <Layers className="w-4 h-4 text-cyan-400" />
-              <span>Filtered CSV</span>
-            </button>
+          {/* Mobile Format Tabs */}
+          <div className="flex sm:hidden items-center border-b border-[var(--border-hairline)] bg-[var(--bg-canvas)] px-4 text-xs font-medium">
+            {(['pdf', 'excel', 'csv'] as const).map((tab) => (
+              <button
+                key={tab}
+                type="button"
+                onClick={() => setActiveTab(tab)}
+                className={`py-2.5 px-3 border-b-2 transition-colors ${
+                  activeTab === tab
+                    ? 'border-blue-500 text-[var(--text-primary)]'
+                    : 'border-transparent text-[var(--text-muted)]'
+                }`}
+              >
+                {tab === 'pdf' ? 'PDF Report' : tab === 'excel' ? 'Excel (.xlsx)' : 'Filtered CSV'}
+              </button>
+            ))}
           </div>
 
-          {/* Modal Content */}
-          <div className="p-6 overflow-y-auto flex-1 space-y-5">
+          {/* Modal Body */}
+          <div className="p-5 overflow-y-auto flex-1">
             {activeTab === 'pdf' && (
-              <div className="space-y-5">
-                {/* Report Metadata */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                  <div>
-                    <label className="text-[11px] font-mono text-zinc-400 uppercase block mb-1">
-                      Report Title
-                    </label>
-                    <input
-                      type="text"
-                      value={config.title}
-                      onChange={(e) => setConfig({ ...config, title: e.target.value })}
-                      className="w-full text-xs bg-zinc-900 border border-zinc-750 text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="text-[11px] font-mono text-zinc-400 uppercase block mb-1">
-                      Prepared For
-                    </label>
-                    <input
-                      type="text"
-                      value={config.preparedFor || ''}
-                      onChange={(e) => setConfig({ ...config, preparedFor: e.target.value })}
-                      className="w-full text-xs bg-zinc-900 border border-zinc-750 text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                      placeholder="e.g. Executive Leadership"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="text-[11px] font-mono text-zinc-400 uppercase block mb-1">
-                      Subtitle
-                    </label>
-                    <input
-                      type="text"
-                      value={config.subtitle || ''}
-                      onChange={(e) => setConfig({ ...config, subtitle: e.target.value })}
-                      className="w-full text-xs bg-zinc-900 border border-zinc-750 text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="text-[11px] font-mono text-zinc-400 uppercase block mb-1">
-                      Classification
-                    </label>
-                    <select
-                      value={config.classification}
-                      onChange={(e) =>
-                        setConfig({
-                          ...config,
-                          classification: e.target.value as ReportCustomization['classification'],
-                        })
-                      }
-                      className="w-full text-xs bg-zinc-900 border border-zinc-750 text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    >
-                      <option value="Internal Only">INTERNAL ONLY</option>
-                      <option value="Confidential">CONFIDENTIAL</option>
-                      <option value="Restricted">RESTRICTED</option>
-                      <option value="Public">PUBLIC</option>
-                    </select>
-                  </div>
-                </div>
-
-                {/* Page & Theme Settings */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
-                  <div>
-                    <label className="text-[11px] font-mono text-zinc-400 uppercase block mb-1">
-                      Report Theme
-                    </label>
-                    <div className="grid grid-cols-2 gap-1.5">
-                      <button
-                        type="button"
-                        onClick={() => setConfig({ ...config, theme: 'dark' })}
-                        className={`text-xs py-2 px-2.5 rounded-lg border font-medium flex items-center justify-center gap-1.5 transition-all ${
-                          config.theme === 'dark'
-                            ? 'bg-blue-600 text-white border-blue-500'
-                            : 'bg-zinc-900 text-zinc-400 border-zinc-750 hover:text-white'
-                        }`}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+                {/* Left Column: Controls */}
+                <div className="lg:col-span-7 space-y-4">
+                  {/* Metadata Inputs */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[11px] font-mono text-[var(--text-muted)] uppercase block mb-1">
+                        Report Title
+                      </label>
+                      <input
+                        type="text"
+                        value={config.title}
+                        onChange={(e) => setConfig({ ...config, title: e.target.value })}
+                        className="w-full text-xs bg-[var(--bg-elevated)] border border-[var(--border-hairline)] text-[var(--text-primary)] rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500 transition-colors"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-mono text-[var(--text-muted)] uppercase block mb-1">
+                        Prepared For
+                      </label>
+                      <input
+                        type="text"
+                        value={config.preparedFor || ''}
+                        onChange={(e) => setConfig({ ...config, preparedFor: e.target.value })}
+                        placeholder="e.g. Executive Leadership"
+                        className="w-full text-xs bg-[var(--bg-elevated)] border border-[var(--border-hairline)] text-[var(--text-primary)] rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500 transition-colors"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-mono text-[var(--text-muted)] uppercase block mb-1">
+                        Subtitle
+                      </label>
+                      <input
+                        type="text"
+                        value={config.subtitle || ''}
+                        onChange={(e) => setConfig({ ...config, subtitle: e.target.value })}
+                        className="w-full text-xs bg-[var(--bg-elevated)] border border-[var(--border-hairline)] text-[var(--text-primary)] rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500 transition-colors"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-mono text-[var(--text-muted)] uppercase block mb-1">
+                        Classification
+                      </label>
+                      <select
+                        value={config.classification}
+                        onChange={(e) =>
+                          setConfig({
+                            ...config,
+                            classification: e.target.value as ReportCustomization['classification'],
+                          })
+                        }
+                        className="w-full text-xs bg-[var(--bg-elevated)] border border-[var(--border-hairline)] text-[var(--text-primary)] rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500 transition-colors"
                       >
-                        <Moon className="w-3.5 h-3.5" />
-                        <span>Dark</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setConfig({ ...config, theme: 'light' })}
-                        className={`text-xs py-2 px-2.5 rounded-lg border font-medium flex items-center justify-center gap-1.5 transition-all ${
-                          config.theme === 'light'
-                            ? 'bg-blue-600 text-white border-blue-500'
-                            : 'bg-zinc-900 text-zinc-400 border-zinc-750 hover:text-white'
-                        }`}
-                      >
-                        <Sun className="w-3.5 h-3.5" />
-                        <span>Light</span>
-                      </button>
+                        <option value="Internal Only">Internal Only</option>
+                        <option value="Confidential">Confidential</option>
+                        <option value="Restricted">Restricted</option>
+                        <option value="Public">Public</option>
+                      </select>
                     </div>
                   </div>
 
-                  <div>
-                    <label className="text-[11px] font-mono text-zinc-400 uppercase block mb-1">
-                      Orientation
-                    </label>
-                    <div className="grid grid-cols-2 gap-1.5">
-                      <button
-                        type="button"
-                        onClick={() => setConfig({ ...config, orientation: 'landscape' })}
-                        className={`text-xs py-2 px-2 rounded-lg border font-medium transition-all ${
-                          config.orientation === 'landscape'
-                            ? 'bg-blue-600 text-white border-blue-500'
-                            : 'bg-zinc-900 text-zinc-400 border-zinc-750 hover:text-white'
-                        }`}
-                      >
-                        Landscape
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setConfig({ ...config, orientation: 'portrait' })}
-                        className={`text-xs py-2 px-2 rounded-lg border font-medium transition-all ${
-                          config.orientation === 'portrait'
-                            ? 'bg-blue-600 text-white border-blue-500'
-                            : 'bg-zinc-900 text-zinc-400 border-zinc-750 hover:text-white'
-                        }`}
-                      >
-                        Portrait
-                      </button>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="text-[11px] font-mono text-zinc-400 uppercase block mb-1">
-                      Paper Size
-                    </label>
-                    <div className="grid grid-cols-2 gap-1.5">
-                      <button
-                        type="button"
-                        onClick={() => setConfig({ ...config, paperSize: 'a4' })}
-                        className={`text-xs py-2 px-2 rounded-lg border font-medium transition-all ${
-                          config.paperSize === 'a4'
-                            ? 'bg-blue-600 text-white border-blue-500'
-                            : 'bg-zinc-900 text-zinc-400 border-zinc-750 hover:text-white'
-                        }`}
-                      >
-                        A4
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setConfig({ ...config, paperSize: 'letter' })}
-                        className={`text-xs py-2 px-2 rounded-lg border font-medium transition-all ${
-                          config.paperSize === 'letter'
-                            ? 'bg-blue-600 text-white border-blue-500'
-                            : 'bg-zinc-900 text-zinc-400 border-zinc-750 hover:text-white'
-                        }`}
-                      >
-                        Letter
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Included Sections Builder */}
-                <div className="p-4 rounded-xl bg-zinc-900/50 border border-zinc-800 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-mono text-zinc-400 uppercase">
-                      Sections Included in PDF
-                    </span>
-                    <div className="flex items-center gap-2 text-[11px]">
-                      <button
-                        type="button"
-                        onClick={() => applyPreset('full')}
-                        className="text-blue-400 hover:text-blue-300 font-medium"
-                      >
-                        Full Dossier
-                      </button>
-                      <span className="text-zinc-600">•</span>
-                      <button
-                        type="button"
-                        onClick={() => applyPreset('visuals')}
-                        className="text-zinc-400 hover:text-white font-medium"
-                      >
-                        Visuals Only
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-wrap gap-2">
-                    {sectionToggles.map((item) => {
-                      const checked = Boolean(config[item.key]) && !item.disabled;
-                      return (
+                  {/* Page Setup */}
+                  <div className="grid grid-cols-3 gap-2.5">
+                    <div>
+                      <label className="text-[11px] font-mono text-[var(--text-muted)] uppercase block mb-1">
+                        Theme
+                      </label>
+                      <div className="grid grid-cols-2 gap-1 bg-[var(--bg-elevated)] p-0.5 rounded-lg border border-[var(--border-hairline)]">
                         <button
-                          key={item.key}
                           type="button"
-                          disabled={item.disabled}
-                          onClick={() => setConfig({ ...config, [item.key]: !config[item.key] })}
-                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
-                            checked
-                              ? 'bg-blue-600/15 border-blue-500/40 text-blue-300'
-                              : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-zinc-200'
+                          onClick={() => setConfig({ ...config, theme: 'dark' })}
+                          className={`text-xs py-1.5 rounded-md font-medium flex items-center justify-center gap-1 transition-colors ${
+                            config.theme === 'dark'
+                              ? 'bg-[var(--bg-surface)] text-[var(--text-primary)] border border-[var(--border-hairline)]'
+                              : 'text-[var(--text-muted)] border border-transparent'
                           }`}
                         >
-                          {checked && <Check className="w-3 h-3 text-blue-400" />}
-                          <span>{item.label}</span>
+                          <Moon className="w-3 h-3" />
+                          <span>Dark</span>
                         </button>
-                      );
-                    })}
-                  </div>
-
-                  {/* Individual Chart Selector */}
-                  {config.includeCharts && charts.length > 0 && (
-                    <div className="pt-2 border-t border-zinc-800/80">
-                      <span className="text-[10px] font-mono text-zinc-500 uppercase block mb-2">
-                        Select Individual Charts
-                      </span>
-                      <div className="flex flex-wrap gap-1.5">
-                        {charts.map((c) => {
-                          const isSelected = selectedChartSet.has(c.id);
-                          return (
-                            <button
-                              key={c.id}
-                              type="button"
-                              onClick={() => toggleChartId(c.id)}
-                              className={`text-[11px] px-2.5 py-1 rounded-md border transition-colors ${
-                                isSelected
-                                  ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
-                                  : 'bg-zinc-950 border-zinc-800 text-zinc-500 hover:text-zinc-300'
-                              }`}
-                            >
-                              {c.title}
-                            </button>
-                          );
-                        })}
+                        <button
+                          type="button"
+                          onClick={() => setConfig({ ...config, theme: 'light' })}
+                          className={`text-xs py-1.5 rounded-md font-medium flex items-center justify-center gap-1 transition-colors ${
+                            config.theme === 'light'
+                              ? 'bg-[var(--bg-surface)] text-[var(--text-primary)] border border-[var(--border-hairline)]'
+                              : 'text-[var(--text-muted)] border border-transparent'
+                          }`}
+                        >
+                          <Sun className="w-3 h-3" />
+                          <span>Light</span>
+                        </button>
                       </div>
                     </div>
-                  )}
 
-                  {/* Data Sample Row Count Selector */}
-                  {config.includeDataSample && (
-                    <div className="pt-2 border-t border-zinc-800/80 flex items-center justify-between text-xs">
-                      <span className="text-zinc-400">Data Sample Row Limit:</span>
-                      <div className="flex items-center gap-1.5">
-                        {([10, 25, 50] as const).map((limit) => (
+                    <div>
+                      <label className="text-[11px] font-mono text-[var(--text-muted)] uppercase block mb-1">
+                        Orientation
+                      </label>
+                      <div className="grid grid-cols-2 gap-1 bg-[var(--bg-elevated)] p-0.5 rounded-lg border border-[var(--border-hairline)]">
+                        <button
+                          type="button"
+                          onClick={() => setConfig({ ...config, orientation: 'landscape' })}
+                          className={`text-xs py-1.5 rounded-md font-medium transition-colors ${
+                            config.orientation === 'landscape'
+                              ? 'bg-[var(--bg-surface)] text-[var(--text-primary)] border border-[var(--border-hairline)]'
+                              : 'text-[var(--text-muted)] border border-transparent'
+                          }`}
+                        >
+                          Wide
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setConfig({ ...config, orientation: 'portrait' })}
+                          className={`text-xs py-1.5 rounded-md font-medium transition-colors ${
+                            config.orientation === 'portrait'
+                              ? 'bg-[var(--bg-surface)] text-[var(--text-primary)] border border-[var(--border-hairline)]'
+                              : 'text-[var(--text-muted)] border border-transparent'
+                          }`}
+                        >
+                          Tall
+                        </button>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="text-[11px] font-mono text-[var(--text-muted)] uppercase block mb-1">
+                        Paper
+                      </label>
+                      <div className="grid grid-cols-2 gap-1 bg-[var(--bg-elevated)] p-0.5 rounded-lg border border-[var(--border-hairline)]">
+                        <button
+                          type="button"
+                          onClick={() => setConfig({ ...config, paperSize: 'a4' })}
+                          className={`text-xs py-1.5 rounded-md font-medium transition-colors ${
+                            config.paperSize === 'a4'
+                              ? 'bg-[var(--bg-surface)] text-[var(--text-primary)] border border-[var(--border-hairline)]'
+                              : 'text-[var(--text-muted)] border border-transparent'
+                          }`}
+                        >
+                          A4
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setConfig({ ...config, paperSize: 'letter' })}
+                          className={`text-xs py-1.5 rounded-md font-medium transition-colors ${
+                            config.paperSize === 'letter'
+                              ? 'bg-[var(--bg-surface)] text-[var(--text-primary)] border border-[var(--border-hairline)]'
+                              : 'text-[var(--text-muted)] border border-transparent'
+                          }`}
+                        >
+                          Letter
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Included Sections */}
+                  <div className="p-3.5 rounded-xl bg-[var(--bg-elevated)] border border-[var(--border-hairline)] space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-mono text-[var(--text-muted)] uppercase">
+                        Report Sections
+                      </span>
+                      <div className="flex items-center gap-2 text-[11px]">
+                        <button
+                          type="button"
+                          onClick={() => applyPreset('full')}
+                          className="text-blue-500 hover:underline font-medium"
+                        >
+                          Full Dossier
+                        </button>
+                        <span className="text-[var(--text-muted)]">/</span>
+                        <button
+                          type="button"
+                          onClick={() => applyPreset('visuals')}
+                          className="text-[var(--text-muted)] hover:text-[var(--text-primary)] font-medium"
+                        >
+                          Visuals Only
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap gap-1.5">
+                      {sectionToggles.map((item) => {
+                        const checked = Boolean(config[item.key]) && !item.disabled;
+                        return (
                           <button
-                            key={limit}
+                            key={item.key}
                             type="button"
-                            onClick={() => setConfig({ ...config, dataSampleLimit: limit })}
-                            className={`px-2.5 py-1 rounded-md text-[11px] font-mono border transition-colors ${
-                              config.dataSampleLimit === limit
-                                ? 'bg-blue-600 text-white border-blue-500'
-                                : 'bg-zinc-950 border-zinc-800 text-zinc-400 hover:text-white'
+                            disabled={item.disabled}
+                            onClick={() => setConfig({ ...config, [item.key]: !config[item.key] })}
+                            className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium border transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
+                              checked
+                                ? 'bg-blue-600/15 border-blue-500/40 text-blue-400'
+                                : 'bg-[var(--bg-surface)] border-[var(--border-hairline)] text-[var(--text-muted)] hover:text-[var(--text-primary)]'
                             }`}
                           >
-                            {limit} rows
+                            {checked && <Check className="w-3 h-3" />}
+                            <span>{item.label}</span>
                           </button>
-                        ))}
-                      </div>
+                        );
+                      })}
                     </div>
-                  )}
+
+                    {config.includeCharts && charts.length > 0 && (
+                      <div className="pt-2 border-t border-[var(--border-hairline)]">
+                        <span className="text-[10px] font-mono text-[var(--text-muted)] uppercase block mb-1.5">
+                          Select Charts
+                        </span>
+                        <div className="flex flex-wrap gap-1.5">
+                          {charts.map((c) => {
+                            const isSelected = selectedChartSet.has(c.id);
+                            return (
+                              <button
+                                key={c.id}
+                                type="button"
+                                onClick={() => toggleChartId(c.id)}
+                                className={`text-[11px] px-2 py-1 rounded-md border transition-colors ${
+                                  isSelected
+                                    ? 'bg-[var(--bg-surface)] border-[var(--border-strong)] text-[var(--text-primary)]'
+                                    : 'bg-transparent border-[var(--border-hairline)] text-[var(--text-muted)] opacity-60 hover:opacity-100'
+                                }`}
+                              >
+                                {c.title}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {config.includeDataSample && (
+                      <div className="pt-2 border-t border-[var(--border-hairline)] flex items-center justify-between text-xs">
+                        <span className="text-[var(--text-muted)]">Sample Row Limit</span>
+                        <div className="flex items-center gap-1">
+                          {([10, 25, 50] as const).map((limit) => (
+                            <button
+                              key={limit}
+                              type="button"
+                              onClick={() => setConfig({ ...config, dataSampleLimit: limit })}
+                              className={`px-2 py-0.5 rounded text-[11px] font-mono border transition-colors ${
+                                config.dataSampleLimit === limit
+                                  ? 'bg-blue-600 text-white border-blue-500'
+                                  : 'bg-[var(--bg-surface)] border-[var(--border-hairline)] text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+                              }`}
+                            >
+                              {limit}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Analyst Notes */}
+                  <div>
+                    <label className="text-[11px] font-mono text-[var(--text-muted)] uppercase block mb-1">
+                      Analyst Commentary (Optional)
+                    </label>
+                    <textarea
+                      rows={2}
+                      value={config.customNotes || ''}
+                      onChange={(e) => setConfig({ ...config, customNotes: e.target.value })}
+                      placeholder="Add executive summary notes or takeaways..."
+                      className="w-full text-xs bg-[var(--bg-elevated)] border border-[var(--border-hairline)] text-[var(--text-primary)] rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500 resize-none transition-colors"
+                    />
+                  </div>
                 </div>
 
-                {/* Custom Analyst Notes */}
-                <div>
-                  <label className="text-[11px] font-mono text-zinc-400 uppercase block mb-1">
-                    Analyst Commentary &amp; Takeaways (Optional)
-                  </label>
-                  <textarea
-                    rows={2}
-                    value={config.customNotes || ''}
-                    onChange={(e) => setConfig({ ...config, customNotes: e.target.value })}
-                    placeholder="Add executive summary notes, key findings, or recommendations to embed in the PDF..."
-                    className="w-full text-xs bg-zinc-900 border border-zinc-750 text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none"
-                  />
-                </div>
-
-                {/* Live Summary + Export Button */}
-                <div className="space-y-2.5">
-                  <div className="text-[11px] font-mono text-zinc-400 bg-zinc-900/40 border border-zinc-800/80 rounded-lg px-3 py-2">
-                    Included:{' '}
-                    <span className="text-zinc-200">
-                      {includedSummary.length > 0 ? includedSummary.join(' • ') : 'No sections selected'}
+                {/* Right Column: Live Document Blueprint Preview */}
+                <div className="lg:col-span-5 flex flex-col gap-3">
+                  <div className="flex items-center justify-between text-[11px] font-mono text-[var(--text-muted)]">
+                    <span>LIVE DOCUMENT PREVIEW</span>
+                    <span>
+                      {config.paperSize.toUpperCase()} • {config.orientation.toUpperCase()}
                     </span>
                   </div>
+
+                  <div
+                    className={`rounded-xl border p-4 space-y-3 transition-colors ${
+                      isPreviewDark
+                        ? 'bg-[#09090b] border-zinc-800 text-zinc-100'
+                        : 'bg-[#f8fafc] border-slate-200 text-slate-900'
+                    }`}
+                  >
+                    {/* Preview Header */}
+                    {config.includeHeader && (
+                      <div
+                        className={`pb-2.5 border-b flex items-start justify-between gap-2 ${
+                          isPreviewDark ? 'border-zinc-800' : 'border-slate-200'
+                        }`}
+                      >
+                        <div className="min-w-0">
+                          <div className="text-xs font-semibold truncate">
+                            {config.title || dataset.name}
+                          </div>
+                          {config.subtitle && (
+                            <div
+                              className={`text-[10px] truncate ${
+                                isPreviewDark ? 'text-zinc-400' : 'text-slate-500'
+                              }`}
+                            >
+                              {config.subtitle}
+                            </div>
+                          )}
+                        </div>
+                        {config.classification && (
+                          <span className="text-[9px] font-mono font-bold uppercase px-1.5 py-0.5 rounded bg-rose-500 text-white shrink-0">
+                            {config.classification}
+                          </span>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Preview Filter Scope */}
+                    {config.includeFilterScope && (
+                      <div
+                        className={`text-[10px] font-mono px-2 py-1.5 rounded border truncate ${
+                          isPreviewDark
+                            ? 'bg-[#121215] border-zinc-800 text-zinc-400'
+                            : 'bg-white border-slate-200 text-slate-600'
+                        }`}
+                      >
+                        {scopeItems.join(' | ')}
+                      </div>
+                    )}
+
+                    {/* Preview KPIs */}
+                    {config.includeKpis && kpis.length > 0 && (
+                      <div className="grid grid-cols-2 gap-1.5">
+                        {kpis.slice(0, 4).map((k) => (
+                          <div
+                            key={k.id}
+                            className={`p-2 rounded border ${
+                              isPreviewDark
+                                ? 'bg-[#121215] border-zinc-800'
+                                : 'bg-white border-slate-200'
+                            }`}
+                          >
+                            <div
+                              className={`text-[9px] uppercase truncate ${
+                                isPreviewDark ? 'text-zinc-400' : 'text-slate-500'
+                              }`}
+                            >
+                              {k.title}
+                            </div>
+                            <div className="text-xs font-mono font-semibold tabular-nums">
+                              {k.value}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Preview Charts */}
+                    {config.includeCharts && selectedChartSet.size > 0 && (
+                      <div className="grid grid-cols-2 gap-1.5">
+                        {charts
+                          .filter((c) => selectedChartSet.has(c.id))
+                          .slice(0, 4)
+                          .map((c) => (
+                            <div
+                              key={c.id}
+                              className={`p-2 rounded border text-[10px] truncate ${
+                                isPreviewDark
+                                  ? 'bg-[#121215] border-zinc-800 text-zinc-300'
+                                  : 'bg-white border-slate-200 text-slate-700'
+                              }`}
+                            >
+                              Chart: {c.title}
+                            </div>
+                          ))}
+                      </div>
+                    )}
+
+                    {/* Preview Tables & Notes Indicators */}
+                    <div className="space-y-1.5 text-[10px] font-mono">
+                      {config.includeColumnStats && (
+                        <div
+                          className={`px-2 py-1.5 rounded border ${
+                            isPreviewDark
+                              ? 'bg-[#121215] border-zinc-800 text-zinc-400'
+                              : 'bg-white border-slate-200 text-slate-600'
+                          }`}
+                        >
+                          Schema &amp; Stats Table ({dataset.columnCount} columns)
+                        </div>
+                      )}
+                      {config.includeCorrelation && numericColCount >= 2 && (
+                        <div
+                          className={`px-2 py-1.5 rounded border ${
+                            isPreviewDark
+                              ? 'bg-[#121215] border-zinc-800 text-zinc-400'
+                              : 'bg-white border-slate-200 text-slate-600'
+                          }`}
+                        >
+                          Pearson Correlations Matrix
+                        </div>
+                      )}
+                      {config.includeDataSample && (
+                        <div
+                          className={`px-2 py-1.5 rounded border ${
+                            isPreviewDark
+                              ? 'bg-[#121215] border-zinc-800 text-zinc-400'
+                              : 'bg-white border-slate-200 text-slate-600'
+                          }`}
+                        >
+                          Data Sample ({Math.min(config.dataSampleLimit, dataset.rowCount)} rows)
+                        </div>
+                      )}
+                      {config.customNotes?.trim() && (
+                        <div
+                          className={`px-2 py-1.5 rounded border italic truncate ${
+                            isPreviewDark
+                              ? 'bg-[#121215] border-zinc-800 text-zinc-400'
+                              : 'bg-white border-slate-200 text-slate-600'
+                          }`}
+                        >
+                          Notes: {config.customNotes.trim()}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Preview Footer */}
+                    <div
+                      className={`pt-2 border-t flex justify-between text-[9px] font-mono ${
+                        isPreviewDark
+                          ? 'border-zinc-800 text-zinc-500'
+                          : 'border-slate-200 text-slate-400'
+                      }`}
+                    >
+                      <span>DataLens Analytics</span>
+                      <span>Page 1 of N</span>
+                    </div>
+                  </div>
+
                   <button
                     onClick={handleExportPdf}
-                    disabled={isExporting || includedSummary.length === 0}
-                    className="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold flex items-center justify-center gap-2 transition-all disabled:opacity-50 shadow-sm shadow-blue-500/20"
+                    disabled={isExporting || !hasAnySection}
+                    className="w-full py-2.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
                   >
                     <FileText className="w-4 h-4" />
                     <span>
-                      {isExporting ? 'Compiling Vector PDF...' : 'Download Executive PDF Report'}
+                      {isExporting ? 'Compiling PDF...' : 'Download Executive PDF Report'}
                     </span>
                   </button>
                 </div>
@@ -583,25 +767,28 @@ export const ExportModal: React.FC<ExportModalProps> = ({
             )}
 
             {activeTab === 'excel' && (
-              <div className="space-y-4">
-                <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-300 flex items-start gap-2.5">
-                  <FileSpreadsheet className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                  <div>
-                    <span className="font-semibold text-white">Multi-Sheet Workbook Architecture:</span> Generates a structured `.xlsx` spreadsheet with Executive Summary, Filtered Records ({dataset.rows.length.toLocaleString()} rows), and Pearson Correlations.
+              <div className="max-w-lg mx-auto py-4 space-y-4">
+                <div className="p-4 rounded-xl bg-[var(--bg-elevated)] border border-[var(--border-hairline)] space-y-2">
+                  <div className="flex items-center gap-2 text-sm font-medium text-[var(--text-primary)]">
+                    <FileSpreadsheet className="w-4 h-4 text-emerald-500" />
+                    <span>Multi-Sheet Excel Workbook (.xlsx)</span>
                   </div>
+                  <p className="text-xs text-[var(--text-muted)] leading-relaxed">
+                    Generates a structured workbook with Executive Summary, Filtered Records ({dataset.rows.length.toLocaleString()} rows), and Pearson Correlations.
+                  </p>
                 </div>
 
-                <div className="bg-zinc-900/60 border border-zinc-800 rounded-xl p-4 text-xs space-y-2">
-                  <div className="flex justify-between text-zinc-400">
-                    <span>Exporting Records:</span>
-                    <span className="font-mono text-white font-semibold">
-                      {dataset.rows.length.toLocaleString()} rows
+                <div className="p-4 rounded-xl bg-[var(--bg-elevated)] border border-[var(--border-hairline)] text-xs space-y-2 font-mono">
+                  <div className="flex justify-between text-[var(--text-muted)]">
+                    <span>Active Rows</span>
+                    <span className="text-[var(--text-primary)] font-semibold tabular-nums">
+                      {dataset.rows.length.toLocaleString()}
                     </span>
                   </div>
-                  <div className="flex justify-between text-zinc-400">
-                    <span>Column Attributes:</span>
-                    <span className="font-mono text-white font-semibold">
-                      {dataset.columnCount} columns
+                  <div className="flex justify-between text-[var(--text-muted)]">
+                    <span>Columns</span>
+                    <span className="text-[var(--text-primary)] font-semibold tabular-nums">
+                      {dataset.columnCount}
                     </span>
                   </div>
                 </div>
@@ -609,7 +796,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                 <button
                   onClick={handleExportExcel}
                   disabled={isExporting}
-                  className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+                  className="w-full py-2.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
                 >
                   <FileSpreadsheet className="w-4 h-4" />
                   <span>Download Excel Workbook (.xlsx)</span>
@@ -618,18 +805,21 @@ export const ExportModal: React.FC<ExportModalProps> = ({
             )}
 
             {activeTab === 'csv' && (
-              <div className="space-y-4">
-                <div className="p-3.5 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-xs text-cyan-300 flex items-start gap-2.5">
-                  <Layers className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
-                  <div>
-                    <span className="font-semibold text-white">RFC-4180 Cleaned CSV:</span> Exports all {dataset.rows.length.toLocaleString()} active filtered records with UTF-8 BOM encoding.
+              <div className="max-w-lg mx-auto py-4 space-y-4">
+                <div className="p-4 rounded-xl bg-[var(--bg-elevated)] border border-[var(--border-hairline)] space-y-2">
+                  <div className="flex items-center gap-2 text-sm font-medium text-[var(--text-primary)]">
+                    <Layers className="w-4 h-4 text-blue-500" />
+                    <span>RFC-4180 Cleaned CSV</span>
                   </div>
+                  <p className="text-xs text-[var(--text-muted)] leading-relaxed">
+                    Exports all {dataset.rows.length.toLocaleString()} active filtered records with UTF-8 BOM encoding for clean Excel compatibility.
+                  </p>
                 </div>
 
                 <button
                   onClick={handleExportCsv}
                   disabled={isExporting}
-                  className="w-full py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+                  className="w-full py-2.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
                 >
                   <Layers className="w-4 h-4" />
                   <span>Download Cleaned CSV ({dataset.rows.length.toLocaleString()} rows)</span>
@@ -639,15 +829,15 @@ export const ExportModal: React.FC<ExportModalProps> = ({
 
             {/* Status Banners */}
             {exportSuccess && (
-              <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+              <div className="mt-4 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 text-xs flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 shrink-0" />
                 <span>{exportSuccess}</span>
               </div>
             )}
 
             {error && (
-              <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+              <div className="mt-4 p-3 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-500 text-xs flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0" />
                 <span>{error}</span>
               </div>
             )}

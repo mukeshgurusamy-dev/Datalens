@@ -232,9 +232,9 @@ describe('React Dashboard Components', () => {
     );
 
     expect(screen.getByRole('dialog')).toHaveAttribute('aria-modal', 'true');
-    expect(screen.getByRole('button', { name: /^PDF Report$/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Excel \(\.xlsx\)/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Filtered CSV/i })).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: /^PDF Report$/i }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole('button', { name: /Excel \(\.xlsx\)/i }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole('button', { name: /Filtered CSV/i }).length).toBeGreaterThan(0);
     expect(screen.queryByRole('button', { name: /HD Image/i })).not.toBeInTheDocument();
 
     expect(screen.getByText('Header & Metadata')).toBeInTheDocument();
