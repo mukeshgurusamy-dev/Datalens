@@ -27,6 +27,11 @@ export const ChartCustomizer: React.FC<ChartCustomizerProps> = ({
   const dialogRef = useModalAccessibility(Boolean(chart), onClose);
   if (!chart) return null;
 
+  const isSqlChart = chart.id.startsWith('sql-chart-');
+  const visibleTypes = isSqlChart
+    ? AVAILABLE_TYPES.filter((t) => t.type !== 'scatter')
+    : AVAILABLE_TYPES;
+
   const numericCols = columns.filter((c) => c.type === 'number');
   const axisCols =
     chart.type === 'scatter'
@@ -45,7 +50,7 @@ export const ChartCustomizer: React.FC<ChartCustomizerProps> = ({
       ...chart,
       type: newType,
       xAxis: nextX,
-      title: `${chart.yAxis} by ${nextX}`,
+      title: isSqlChart ? chart.title : `${chart.yAxis} by ${nextX}`,
     });
   };
 
@@ -105,7 +110,7 @@ export const ChartCustomizer: React.FC<ChartCustomizerProps> = ({
                 Visualization Type
               </label>
               <div className="grid grid-cols-2 gap-2">
-                {AVAILABLE_TYPES.map((t) => {
+                {visibleTypes.map((t) => {
                   const isSelected = chart.type === t.type;
                   return (
                     <button
@@ -125,41 +130,51 @@ export const ChartCustomizer: React.FC<ChartCustomizerProps> = ({
               </div>
             </div>
 
-            {/* X-Axis Selector */}
-            <div className="mt-6">
-              <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">
-                X-Axis Dimension
-              </label>
-              <select
-                value={chart.xAxis}
-                onChange={(e) => handleXAxisChange(e.target.value)}
-                className="w-full bg-[#18181b] border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500 transition-colors"
-              >
-                {axisCols.map((c) => (
-                  <option key={c.name} value={c.name}>
-                    {c.name} ({c.type})
-                  </option>
-                ))}
-              </select>
-            </div>
+            {isSqlChart ? (
+              <div className="mt-6 p-3.5 rounded-xl bg-zinc-900/60 border border-zinc-800 text-xs text-zinc-400 leading-relaxed">
+                Axes (<span className="font-mono text-zinc-200">{chart.xAxis}</span> &amp;{' '}
+                <span className="font-mono text-zinc-200">{chart.yAxis}</span>) are locked to your SQL Studio query.
+                To change columns or aggregations, run a new query in SQL Studio.
+              </div>
+            ) : (
+              <>
+                {/* X-Axis Selector */}
+                <div className="mt-6">
+                  <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">
+                    X-Axis Dimension
+                  </label>
+                  <select
+                    value={chart.xAxis}
+                    onChange={(e) => handleXAxisChange(e.target.value)}
+                    className="w-full bg-[#18181b] border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500 transition-colors"
+                  >
+                    {axisCols.map((c) => (
+                      <option key={c.name} value={c.name}>
+                        {c.name} ({c.type})
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-            {/* Y-Axis Metric Selector */}
-            <div className="mt-6">
-              <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">
-                Y-Axis Metric
-              </label>
-              <select
-                value={chart.yAxis}
-                onChange={(e) => handleYAxisChange(e.target.value)}
-                className="w-full bg-[#18181b] border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500 transition-colors"
-              >
-                {numericCols.map((c) => (
-                  <option key={c.name} value={c.name}>
-                    {c.name} (Numeric)
-                  </option>
-                ))}
-              </select>
-            </div>
+                {/* Y-Axis Metric Selector */}
+                <div className="mt-6">
+                  <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">
+                    Y-Axis Metric
+                  </label>
+                  <select
+                    value={chart.yAxis}
+                    onChange={(e) => handleYAxisChange(e.target.value)}
+                    className="w-full bg-[#18181b] border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500 transition-colors"
+                  >
+                    {numericCols.map((c) => (
+                      <option key={c.name} value={c.name}>
+                        {c.name} (Numeric)
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </>
+            )}
           </div>
 
           {/* Footer Action */}

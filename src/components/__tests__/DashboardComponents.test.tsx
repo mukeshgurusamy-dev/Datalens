@@ -6,7 +6,8 @@ import { KpiRow } from '../KpiRow';
 import { FilterBar } from '../FilterBar';
 import { DataTable } from '../DataTable';
 import { ShareModal } from '../ShareModal';
-import type { DatasetSchema, KpiCard, DataFilterState } from '../../types/dataset';
+import { ChartCustomizer } from '../ChartCustomizer';
+import type { DatasetSchema, KpiCard, DataFilterState, ChartRecommendation } from '../../types/dataset';
 
 beforeAll(() => {
   if (typeof globalThis.ResizeObserver === 'undefined') {
@@ -164,5 +165,43 @@ describe('React Dashboard Components', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /close modal/i }));
     expect(onClose).toHaveBeenCalledTimes(2);
+  });
+
+  it('ChartCustomizer hides X/Y axis selectors and Scatter for SQL Studio charts', () => {
+    const onUpdateChart = vi.fn();
+    const sqlChart: ChartRecommendation = {
+      id: 'sql-chart-12345',
+      type: 'donut',
+      title: 'total_revenue by region (SQL Studio)',
+      description: 'Generated from in-memory SQL Studio',
+      xAxis: 'region',
+      yAxis: 'total_revenue',
+      data: [{ region: 'Europe', total_revenue: 1200, name: 'Europe', value: 1200 }],
+    };
+
+    render(
+      <ChartCustomizer
+        chart={sqlChart}
+        columns={MOCK_DATASET.columns}
+        onClose={vi.fn()}
+        onUpdateChart={onUpdateChart}
+      />
+    );
+
+    expect(screen.queryByText('X-Axis Dimension')).not.toBeInTheDocument();
+    expect(screen.queryByText('Y-Axis Metric')).not.toBeInTheDocument();
+    expect(screen.queryByText('Scatter Plot')).not.toBeInTheDocument();
+    expect(screen.getByText(/locked to your SQL Studio query/i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /Bar Chart/i }));
+    expect(onUpdateChart).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'sql-chart-12345',
+        type: 'bar',
+        xAxis: 'region',
+        yAxis: 'total_revenue',
+        title: 'total_revenue by region (SQL Studio)',
+      })
+    );
   });
 });
