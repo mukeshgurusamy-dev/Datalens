@@ -6,7 +6,7 @@
     <strong>Free • Fast • Secure • 100% Client-Side Analytics Engine</strong>
   </p>
   <p>
-    <a href="https://mukeshgurusamy-dev.github.io/Datalens/"><strong>Launch Live App →</strong></a>
+    <a href="https://mukeshgurusamy-dev.github.io/Datalens/"><strong>Live App →</strong></a>
   </p>
 
   <p>
