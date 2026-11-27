@@ -25,7 +25,7 @@
 
 ## Demo
 
-🎥 **[Watch the DataLens Demo Video (MP4)](https://github.com/mukeshgurusamy-dev/Datalens/releases/download/v1/DataLens_Ad.mp4)**
+https://github.com/user-attachments/assets/3d9519cd-d031-4cd4-bd5c-447fdf1facdb
 
 ---
 
