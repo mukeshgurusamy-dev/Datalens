@@ -137,26 +137,32 @@ const PerformanceHudContent: React.FC<{
                 <span>Sub-4ms Target</span>
               </div>
               <div className="flex items-end gap-1 h-12 p-1.5 rounded-xl bg-zinc-950/80 border border-zinc-850">
-                {commits.slice(0, 20).reverse().map((c, i) => {
-                  const h = Math.min(100, Math.max(15, (c.actualDuration / 10) * 100));
-                  const bg =
-                    c.actualDuration < 4
-                      ? 'bg-emerald-400/80 hover:bg-emerald-300'
-                      : c.actualDuration < 16
-                      ? 'bg-amber-400/80 hover:bg-amber-300'
-                      : 'bg-rose-400/80 hover:bg-rose-300';
-                  return (
-                    <motion.div
-                      key={c.commitTime ?? i}
-                      initial={{ scaleY: 0, opacity: 0.4 }}
-                      animate={{ scaleY: 1, opacity: 1 }}
-                      transition={{ duration: 0.3, delay: i * 0.015, ease: 'easeOut' }}
-                      title={`${c.id}: ${Math.round(c.actualDuration * 100) / 100}ms (${c.phase})`}
-                      className={`flex-1 rounded-sm transition-colors cursor-pointer ${bg}`}
-                      style={{ height: `${h}%`, transformOrigin: 'bottom' }}
-                    />
-                  );
-                })}
+                {commits.length === 0 ? (
+                  <div className="w-full h-full flex items-center justify-center text-[10px] text-zinc-500">
+                    Interact with filters or charts to capture commits
+                  </div>
+                ) : (
+                  commits.slice(0, 20).reverse().map((c, i) => {
+                    const h = Math.min(100, Math.max(15, (c.actualDuration / 10) * 100));
+                    const bg =
+                      c.actualDuration < 4
+                        ? 'bg-emerald-400/80 hover:bg-emerald-300'
+                        : c.actualDuration < 16
+                        ? 'bg-amber-400/80 hover:bg-amber-300'
+                        : 'bg-rose-400/80 hover:bg-rose-300';
+                    return (
+                      <motion.div
+                        key={c.commitTime ?? i}
+                        initial={{ scaleY: 0, opacity: 0.4 }}
+                        animate={{ scaleY: 1, opacity: 1 }}
+                        transition={{ duration: 0.3, delay: i * 0.015, ease: 'easeOut' }}
+                        title={`${c.id}: ${Math.round(c.actualDuration * 100) / 100}ms (${c.phase})`}
+                        className={`flex-1 rounded-sm transition-colors cursor-pointer ${bg}`}
+                        style={{ height: `${h}%`, transformOrigin: 'bottom' }}
+                      />
+                    );
+                  })
+                )}
               </div>
             </div>
           </>

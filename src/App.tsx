@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, lazy, Suspense, Profiler, type ProfilerOnRenderCallback } from 'react';
+import { useState, useCallback, useEffect, useLayoutEffect, useRef, lazy, Suspense, Profiler, type ProfilerOnRenderCallback } from 'react';
 import { MotionConfig, motion, AnimatePresence } from 'motion/react';
 import { Header } from './components/Header';
 import { Dropzone } from './components/Dropzone';
@@ -132,9 +132,14 @@ export function App() {
     resetDashboardState();
   }, [resetDashboardState]);
 
+  const profilerFiredRef = useRef(false);
+  const hasMountedCanvasRef = useRef(false);
+  const renderStartTime = performance.now();
+
   const handleProfilerRender: ProfilerOnRenderCallback = useCallback(
     (id, phase, actualDuration, baseDuration, startTime, commitTime) => {
       if (id === 'DataLensCanvas') {
+        profilerFiredRef.current = true;
         telemetryStore.recordCommit({
           id,
           phase,
@@ -147,6 +152,31 @@ export function App() {
     },
     []
   );
+
+  // Production React strips <Profiler> callbacks; measure real commit duration as fallback
+  useLayoutEffect(() => {
+    if (!dataset || activeTab !== 'overview') {
+      hasMountedCanvasRef.current = false;
+      return;
+    }
+    if (profilerFiredRef.current) {
+      profilerFiredRef.current = false;
+      hasMountedCanvasRef.current = true;
+      return;
+    }
+    const now = performance.now();
+    const duration = Math.max(0.05, now - renderStartTime);
+    const phase = hasMountedCanvasRef.current ? 'update' : 'mount';
+    hasMountedCanvasRef.current = true;
+    telemetryStore.recordCommit({
+      id: 'DataLensCanvas',
+      phase,
+      actualDuration: duration,
+      baseDuration: duration,
+      startTime: renderStartTime,
+      commitTime: now,
+    });
+  }, [dataset, activeDataset, kpis, charts, activeTab]);
 
   return (
     <MotionConfig reducedMotion="user">
