@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { motion } from 'motion/react';
+import React, { useState, useRef } from 'react';
+import { motion, useInView } from 'motion/react';
 import {
   ResponsiveContainer,
   AreaChart,
@@ -69,6 +69,9 @@ const ChartCardItem: React.FC<ChartCardItemProps> = React.memo(({
   activeFilters,
 }) => {
   const [showForecast, setShowForecast] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const isInView = useInView(cardRef, { once: true, amount: 0.2 });
+  const shouldRenderChart = typeof IntersectionObserver === 'undefined' ? true : isInView;
 
   // 1. LTTB Downsampling: Maintains visual fidelity while preventing DOM bloat
   const displayData = React.useMemo(() => {
@@ -88,6 +91,7 @@ const ChartCardItem: React.FC<ChartCardItemProps> = React.memo(({
 
   return (
     <motion.div
+      ref={cardRef}
       data-chart-id={chart.id}
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
@@ -148,6 +152,8 @@ const ChartCardItem: React.FC<ChartCardItemProps> = React.memo(({
             <p className="text-xs font-medium text-zinc-400">No records match the active filters</p>
             <p className="text-[11px] text-zinc-600 mt-1">Try clearing or adjusting filter values</p>
           </div>
+        ) : !shouldRenderChart ? (
+          <div className="w-full h-full rounded-xl bg-[var(--bg-elevated)]/25 border border-[var(--border-hairline)]/40" />
         ) : (
           <ResponsiveContainer width="100%" height="100%" minWidth={100} minHeight={220}>
             {chart.type === 'area' || chart.type === 'line' ? (
@@ -207,6 +213,10 @@ const ChartCardItem: React.FC<ChartCardItemProps> = React.memo(({
                     strokeDasharray="2 2"
                     fillOpacity={1}
                     fill={`url(#gradient-forecast-${chart.id})`}
+                    isAnimationActive={true}
+                    animationDuration={700}
+                    animationEasing="ease-out"
+                    animationBegin={100}
                   />
                 )}
 
@@ -220,6 +230,10 @@ const ChartCardItem: React.FC<ChartCardItemProps> = React.memo(({
                     strokeWidth={2.5}
                     strokeDasharray="4 4"
                     fillOpacity={0}
+                    isAnimationActive={true}
+                    animationDuration={700}
+                    animationEasing="ease-out"
+                    animationBegin={100}
                   />
                 )}
               </AreaChart>
