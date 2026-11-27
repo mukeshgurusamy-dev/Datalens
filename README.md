@@ -7,6 +7,8 @@
   </p>
   <p>
     <a href="https://mukeshgurusamy-dev.github.io/Datalens/"><strong>Live App →</strong></a>
+    &nbsp;•&nbsp;
+    <a href="https://github.com/mukeshgurusamy-dev/Datalens/releases/download/v1/DataLens_Ad.mp4"><strong>Watch Demo Video →</strong></a>
   </p>
 
   <p>
@@ -18,6 +20,12 @@
     <img src="https://img.shields.io/badge/Vitest-120_Tests_Passing-729b1b?style=flat-square&logo=vitest&logoColor=white" alt="120 Tests Passing" />
   </p>
 </div>
+
+---
+
+## Demo
+
+🎥 **[Watch the DataLens Demo Video (MP4)](https://github.com/mukeshgurusamy-dev/Datalens/releases/download/v1/DataLens_Ad.mp4)**
 
 ---
 
