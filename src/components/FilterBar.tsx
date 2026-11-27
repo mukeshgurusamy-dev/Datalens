@@ -140,41 +140,63 @@ export const FilterBar: React.FC<FilterBarProps> = React.memo(({
                   <ChevronDown className={`w-3 h-3 text-[var(--text-muted)] transition-transform ${isOpen ? 'rotate-180' : ''}`} />
                 </button>
 
-                {/* Dropdown Menu */}
+                {/* Dropdown Menu (bottom sheet on mobile, anchored popover on sm+) */}
                 <AnimatePresence>
                   {isOpen && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 6, scale: 0.95 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 6, scale: 0.95 }}
-                      transition={{ type: 'spring', stiffness: 450, damping: 30 }}
-                      className="absolute left-0 top-full mt-2 w-60 bg-[#18181b] border border-zinc-700/80 rounded-xl shadow-2xl p-2.5 z-40"
-                    >
-                      <div className="flex items-center justify-between pb-1.5 mb-1.5 border-b border-zinc-800">
-                        <span className="text-[11px] font-semibold text-zinc-300 uppercase tracking-wider">
-                          {col.name}
-                        </span>
-                        <div className="flex items-center gap-2 text-[10px]">
-                          <button
-                            onClick={() =>
-                              selectAllCategoryValues(
-                                col.name,
-                                items.map((i) => i.value)
-                              )
-                            }
-                            className="text-blue-400 hover:text-blue-300 font-medium"
-                          >
-                            All
-                          </button>
-                          <span className="text-zinc-600">|</span>
-                          <button
-                            onClick={() => clearCategoryValues(col.name)}
-                            className="text-zinc-400 hover:text-zinc-200"
-                          >
-                            Clear
-                          </button>
+                    <>
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        onClick={() => {
+                          setOpenDropdown(null);
+                          setDropdownSearch('');
+                        }}
+                        className="fixed inset-0 bg-black/55 backdrop-blur-[1px] z-40 sm:hidden"
+                      />
+                      <motion.div
+                        initial={{ opacity: 0, y: 10, scale: 0.96 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 10, scale: 0.96 }}
+                        transition={{ type: 'spring', stiffness: 450, damping: 30 }}
+                        style={{ marginBottom: 'env(safe-area-inset-bottom)' }}
+                        className="fixed inset-x-3 bottom-3 z-50 max-h-[68dvh] flex flex-col sm:block sm:max-h-none sm:inset-x-auto sm:bottom-auto sm:mb-0 sm:absolute sm:left-0 sm:top-full sm:mt-2 sm:w-64 sm:max-w-[calc(100vw-2rem)] bg-[#18181b] border border-zinc-700/80 rounded-xl shadow-2xl p-3 sm:p-2.5 sm:z-40"
+                      >
+                        <div className="flex items-center justify-between pb-1.5 mb-1.5 border-b border-zinc-800 shrink-0">
+                          <span className="text-[11px] font-semibold text-zinc-300 uppercase tracking-wider truncate pr-2">
+                            {col.name}
+                          </span>
+                          <div className="flex items-center gap-2 text-[10px] shrink-0">
+                            <button
+                              onClick={() =>
+                                selectAllCategoryValues(
+                                  col.name,
+                                  items.map((i) => i.value)
+                                )
+                              }
+                              className="text-blue-400 hover:text-blue-300 font-medium"
+                            >
+                              All
+                            </button>
+                            <span className="text-zinc-600">|</span>
+                            <button
+                              onClick={() => clearCategoryValues(col.name)}
+                              className="text-zinc-400 hover:text-zinc-200"
+                            >
+                              Clear
+                            </button>
+                            <button
+                              onClick={() => {
+                                setOpenDropdown(null);
+                                setDropdownSearch('');
+                              }}
+                              aria-label="Close filter menu"
+                              className="sm:hidden ml-1 p-1 rounded text-zinc-400 hover:text-white hover:bg-zinc-800"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
                         </div>
-                      </div>
 
                       {/* Search inside dropdown for high option counts */}
                       {items.length > 6 && (
@@ -190,7 +212,7 @@ export const FilterBar: React.FC<FilterBarProps> = React.memo(({
                         </div>
                       )}
 
-                      <div className="mt-1 space-y-0.5 max-h-52 overflow-y-auto pr-1">
+                      <div className="mt-1 space-y-0.5 max-h-[42dvh] sm:max-h-52 overflow-y-auto pr-1">
                         {filteredItems.length > 0 ? (
                           filteredItems.map((item) => {
                             const isSelected = selectedVals.includes(item.value);
@@ -224,7 +246,8 @@ export const FilterBar: React.FC<FilterBarProps> = React.memo(({
                           </div>
                         )}
                       </div>
-                    </motion.div>
+                      </motion.div>
+                    </>
                   )}
                 </AnimatePresence>
               </div>
