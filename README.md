@@ -3,7 +3,7 @@
   <h1>DataLens</h1>
   <h3><strong>Private. Instant. Zero-Server.</strong></h3>
   <p>
-    <strong>Free • Fast • Secure • 100% Client-Side Analytics &amp; BI Engine</strong>
+    <strong>100% Client-Side Analytics &amp; BI Engine</strong>
   </p>
   <p>
     <a href="https://mukeshgurusamy-dev.github.io/Datalens/"><strong>Live App →</strong></a>
