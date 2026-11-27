@@ -1,7 +1,7 @@
 <div align="center">
   <img src="public/datalens-logo.svg" width="64" height="64" alt="DataLens Logo" />
   <h1>DataLens</h1>
-  <h3><strong>Private. Instant. Zero-Server.</strong></h3>
+  <h3><strong>Free. Instant. Zero-Server.</strong></h3>
   <p>
     <strong>100% Client-Side Analytics &amp; BI Engine</strong>
   </p>
