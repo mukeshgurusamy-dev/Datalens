@@ -26,6 +26,7 @@ interface ChartGridProps {
   onCustomizeChart?: (chart: ChartRecommendation) => void;
   onCrossFilter?: (columnName: string, value: string) => void;
   activeFilters?: Record<string, string[]>;
+  forceRenderAll?: boolean;
 }
 
 const COLORS = ['#3b82f6', '#14b8a6', '#f59e0b', '#6366f1', '#ec4899', '#64748b'];
@@ -59,6 +60,7 @@ interface ChartCardItemProps {
   onCustomize?: (chart: ChartRecommendation) => void;
   onCrossFilter?: (columnName: string, value: string) => void;
   activeFilters?: Record<string, string[]>;
+  forceRenderAll?: boolean;
 }
 
 const ChartCardItem: React.FC<ChartCardItemProps> = React.memo(({
@@ -67,11 +69,12 @@ const ChartCardItem: React.FC<ChartCardItemProps> = React.memo(({
   onCustomize,
   onCrossFilter,
   activeFilters,
+  forceRenderAll = false,
 }) => {
   const [showForecast, setShowForecast] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const isInView = useInView(cardRef, { once: true, amount: 0.2 });
-  const shouldRenderChart = typeof IntersectionObserver === 'undefined' ? true : isInView;
+  const shouldRenderChart = forceRenderAll || typeof IntersectionObserver === 'undefined' ? true : isInView;
 
   // 1. LTTB Downsampling: Maintains visual fidelity while preventing DOM bloat
   const displayData = React.useMemo(() => {
@@ -368,6 +371,7 @@ export const ChartGrid: React.FC<ChartGridProps> = React.memo(({
   onCustomizeChart,
   onCrossFilter,
   activeFilters,
+  forceRenderAll = false,
 }) => {
   if (!charts || charts.length === 0) {
     return (
@@ -393,6 +397,7 @@ export const ChartGrid: React.FC<ChartGridProps> = React.memo(({
           onCustomize={onCustomizeChart}
           onCrossFilter={onCrossFilter}
           activeFilters={activeFilters}
+          forceRenderAll={forceRenderAll}
         />
       ))}
     </div>

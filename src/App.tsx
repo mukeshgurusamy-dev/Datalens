@@ -328,6 +328,7 @@ export function App() {
                             onCustomizeChart={setEditingChart}
                             onCrossFilter={handleCrossFilter}
                             activeFilters={filters.selectedCategories}
+                            forceRenderAll={isExportModalOpen}
                           />
                         </CardErrorBoundary>
                       </Suspense>

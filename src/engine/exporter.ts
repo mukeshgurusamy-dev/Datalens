@@ -138,6 +138,135 @@ export function buildFilterScopeItems(
   return items;
 }
 
+function renderFallbackChartToPng(
+  chart: ChartRecommendation,
+  pixelRatio: number = 2
+): string | null {
+  if (typeof document === 'undefined' || !chart.data || chart.data.length === 0) return null;
+  const w = 640;
+  const h = 360;
+  const canvas = document.createElement('canvas');
+  canvas.width = w * pixelRatio;
+  canvas.height = h * pixelRatio;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return null;
+
+  ctx.scale(pixelRatio, pixelRatio);
+  ctx.fillStyle = '#121215';
+  ctx.fillRect(0, 0, w, h);
+
+  // Title & subtitle
+  ctx.fillStyle = '#f4f4f5';
+  ctx.font = '600 15px system-ui, -apple-system, sans-serif';
+  ctx.fillText(chart.title || chart.id, 20, 30);
+  ctx.fillStyle = '#a1a1aa';
+  ctx.font = '12px system-ui, -apple-system, sans-serif';
+  ctx.fillText(chart.description || `${chart.yAxis} by ${chart.xAxis}`, 20, 48);
+
+  const padL = 56;
+  const padR = 24;
+  const padT = 72;
+  const padB = 42;
+  const plotW = w - padL - padR;
+  const plotH = h - padT - padB;
+  const data = chart.data.slice(0, 80);
+  const colors = ['#3b82f6', '#14b8a6', '#f59e0b', '#6366f1', '#ec4899', '#64748b'];
+
+  if (chart.type === 'donut') {
+    const total = data.reduce((s, d) => s + Math.max(0, Number(d[chart.yAxis]) || 0), 0) || 1;
+    const cx = w / 2;
+    const cy = padT + plotH / 2;
+    const outerR = Math.min(plotW, plotH) * 0.42;
+    const innerR = outerR * 0.62;
+    let angle = -Math.PI / 2;
+
+    data.forEach((d, idx) => {
+      const val = Math.max(0, Number(d[chart.yAxis]) || 0);
+      const slice = (val / total) * Math.PI * 2;
+      ctx.beginPath();
+      ctx.arc(cx, cy, outerR, angle, angle + slice);
+      ctx.arc(cx, cy, innerR, angle + slice, angle, true);
+      ctx.closePath();
+      ctx.fillStyle = colors[idx % colors.length];
+      ctx.fill();
+      angle += slice;
+    });
+    return canvas.toDataURL('image/png');
+  }
+
+  // Gridlines
+  ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= 4; i++) {
+    const gy = padT + (plotH * i) / 4;
+    ctx.beginPath();
+    ctx.moveTo(padL, gy);
+    ctx.lineTo(w - padR, gy);
+    ctx.stroke();
+  }
+
+  if (chart.type === 'scatter') {
+    const xs = data.map((d) => Number(d[chart.xAxis]) || 0);
+    const ys = data.map((d) => Number(d[chart.yAxis]) || 0);
+    const minX = Math.min(...xs);
+    const maxX = Math.max(...xs) || minX + 1;
+    const minY = Math.min(...ys);
+    const maxY = Math.max(...ys) || minY + 1;
+    ctx.fillStyle = '#3b82f6';
+    data.forEach((_, idx) => {
+      const px = padL + ((xs[idx] - minX) / (maxX - minX || 1)) * plotW;
+      const py = padT + plotH - ((ys[idx] - minY) / (maxY - minY || 1)) * plotH;
+      ctx.beginPath();
+      ctx.arc(px, py, 4, 0, Math.PI * 2);
+      ctx.fill();
+    });
+    return canvas.toDataURL('image/png');
+  }
+
+  const ys = data.map((d) => Number(d[chart.yAxis]) || 0);
+  const maxY = Math.max(1, ...ys);
+
+  if (chart.type === 'bar') {
+    const barGap = Math.max(4, plotW * 0.02);
+    const barW = Math.max(6, (plotW - barGap * (data.length - 1)) / data.length);
+    ctx.fillStyle = '#3b82f6';
+    data.forEach((_, idx) => {
+      const val = Math.max(0, ys[idx]);
+      const bh = (val / maxY) * plotH;
+      const bx = padL + idx * (barW + barGap);
+      const by = padT + plotH - bh;
+      ctx.fillRect(bx, by, barW, bh);
+    });
+  } else {
+    // Area / Line fallback
+    const pts = data.map((_, idx) => ({
+      x: padL + (data.length === 1 ? plotW / 2 : (idx / (data.length - 1)) * plotW),
+      y: padT + plotH - (Math.max(0, ys[idx]) / maxY) * plotH,
+    }));
+
+    if (pts.length > 1) {
+      const grad = ctx.createLinearGradient(0, padT, 0, padT + plotH);
+      grad.addColorStop(0, 'rgba(59, 130, 246, 0.35)');
+      grad.addColorStop(1, 'rgba(59, 130, 246, 0.0)');
+      ctx.beginPath();
+      ctx.moveTo(pts[0].x, padT + plotH);
+      pts.forEach((p) => ctx.lineTo(p.x, p.y));
+      ctx.lineTo(pts[pts.length - 1].x, padT + plotH);
+      ctx.closePath();
+      ctx.fillStyle = grad;
+      ctx.fill();
+    }
+
+    ctx.beginPath();
+    pts.forEach((p, idx) => (idx === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y)));
+    ctx.strokeStyle = '#3b82f6';
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+  }
+
+  return canvas.toDataURL('image/png');
+}
+
 async function captureSelectedCharts(
   charts: ChartRecommendation[] = [],
   selectedChartIds?: string[],
@@ -149,6 +278,7 @@ async function captureSelectedCharts(
       : new Set(charts.map((c) => c.id));
 
   const captured: CapturedChart[] = [];
+  const capturedIds = new Set<string>();
   const chartNodes = Array.from(
     document.querySelectorAll<HTMLElement>('[data-chart-id]')
   );
@@ -161,20 +291,53 @@ async function captureSelectedCharts(
     const rect = node.getBoundingClientRect();
     if (rect.width === 0 || rect.height === 0) continue;
 
-    const dataUrl = await toPng(node, {
-      quality: 0.98,
-      pixelRatio,
-      backgroundColor: '#121215',
-      cacheBust: true,
-    });
+    try {
+      const dataUrl = await toPng(node, {
+        quality: 0.98,
+        pixelRatio,
+        backgroundColor: '#121215',
+        skipFonts: true,
+        cacheBust: false,
+      });
 
-    captured.push({
-      id,
-      title: meta?.title || id,
-      dataUrl,
-      width: rect.width,
-      height: rect.height,
-    });
+      captured.push({
+        id,
+        title: meta?.title || id,
+        dataUrl,
+        width: rect.width,
+        height: rect.height,
+      });
+      capturedIds.add(id);
+    } catch {
+      if (meta) {
+        const fallbackUrl = renderFallbackChartToPng(meta, pixelRatio);
+        if (fallbackUrl) {
+          captured.push({
+            id,
+            title: meta.title || id,
+            dataUrl: fallbackUrl,
+            width: 640,
+            height: 360,
+          });
+          capturedIds.add(id);
+        }
+      }
+    }
+  }
+
+  // Fallback for selected charts not currently in DOM (e.g. exporting from Data/Modeling tabs)
+  for (const chart of charts) {
+    if (!allowedIds.has(chart.id) || capturedIds.has(chart.id)) continue;
+    const fallbackUrl = renderFallbackChartToPng(chart, pixelRatio);
+    if (fallbackUrl) {
+      captured.push({
+        id: chart.id,
+        title: chart.title || chart.id,
+        dataUrl: fallbackUrl,
+        width: 640,
+        height: 360,
+      });
+    }
   }
 
   return captured;
