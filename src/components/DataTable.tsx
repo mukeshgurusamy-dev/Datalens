@@ -22,6 +22,22 @@ const TypeIcon: React.FC<{ type: ColumnType }> = ({ type }) => {
   }
 };
 
+function formatCellValue(val: unknown): string {
+  if (val === null || val === undefined) return '';
+  if (val instanceof Date) {
+    return isNaN(val.getTime()) ? '' : val.toISOString().replace('T', ' ').slice(0, 19);
+  }
+  if (typeof val === 'object') {
+    try {
+      const json = JSON.stringify(val);
+      return json === '{}' ? '' : json;
+    } catch {
+      return '';
+    }
+  }
+  return String(val);
+}
+
 export const DataTable: React.FC<DataTableProps> = React.memo(({ dataset }) => {
   const [search, setSearch] = useState('');
   const deferredSearch = useDeferredValue(search);
@@ -36,7 +52,7 @@ export const DataTable: React.FC<DataTableProps> = React.memo(({ dataset }) => {
     const query = deferredSearch.toLowerCase();
     return dataset.rows.filter((row) =>
       Object.values(row).some((val) =>
-        String(val ?? '').toLowerCase().includes(query)
+        formatCellValue(val).toLowerCase().includes(query)
       )
     );
   }, [dataset.rows, deferredSearch]);
@@ -183,12 +199,10 @@ export const DataTable: React.FC<DataTableProps> = React.memo(({ dataset }) => {
                               isNum || isDate ? 'font-mono tabular-nums text-zinc-200' : ''
                             }`}
                           >
-                            {val === null || val === undefined ? (
+                            {val === null || val === undefined || val === '' ? (
                               <span className="text-zinc-600 italic">null</span>
-                            ) : typeof val === 'object' && (val as unknown) instanceof Date ? (
-                              (val as Date).toISOString().replace('T', ' ').slice(0, 19)
                             ) : (
-                              String(val)
+                              formatCellValue(val)
                             )}
                           </div>
                         );
@@ -232,12 +246,10 @@ export const DataTable: React.FC<DataTableProps> = React.memo(({ dataset }) => {
                               isNum || isDate ? 'font-mono tabular-nums text-zinc-200' : ''
                             }`}
                           >
-                            {val === null || val === undefined ? (
+                            {val === null || val === undefined || val === '' ? (
                               <span className="text-zinc-600 italic">null</span>
-                            ) : typeof val === 'object' && (val as unknown) instanceof Date ? (
-                              (val as Date).toISOString().replace('T', ' ').slice(0, 19)
                             ) : (
-                              String(val)
+                              formatCellValue(val)
                             )}
                           </td>
                         );

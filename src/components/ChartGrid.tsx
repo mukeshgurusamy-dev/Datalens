@@ -186,9 +186,14 @@ const ChartCardItem: React.FC<ChartCardItemProps> = React.memo(({
                   name="Historical"
                   stroke="#3b82f6"
                   strokeWidth={2.5}
+                  dot={activeData.length <= 2 ? { r: 4, fill: '#3b82f6', strokeWidth: 0 } : false}
+                  activeDot={{ r: 5, fill: '#60a5fa', stroke: '#1e3a8a', strokeWidth: 2 }}
                   fillOpacity={chart.type === 'line' ? 0 : 1}
                   fill={`url(#gradient-${chart.id})`}
-                  isAnimationActive={false}
+                  isAnimationActive={true}
+                  animationDuration={550}
+                  animationEasing="ease-out"
+                  animationBegin={0}
                 />
 
                 {/* 95% Confidence Upper Band */}
@@ -240,7 +245,10 @@ const ChartCardItem: React.FC<ChartCardItemProps> = React.memo(({
                   dataKey={chart.yAxis}
                   fill="#3b82f6"
                   radius={[6, 6, 0, 0]}
-                  isAnimationActive={false}
+                  isAnimationActive={true}
+                  animationDuration={550}
+                  animationEasing="ease-out"
+                  animationBegin={0}
                   className="cursor-pointer transition-opacity"
                   onClick={(entry: any) => {
                     const rawVal = entry && (entry[chart.xAxis] || entry.payload?.[chart.xAxis]);
@@ -275,7 +283,10 @@ const ChartCardItem: React.FC<ChartCardItemProps> = React.memo(({
                   innerRadius={65}
                   outerRadius={95}
                   paddingAngle={3}
-                  isAnimationActive={false}
+                  isAnimationActive={true}
+                  animationDuration={550}
+                  animationEasing="ease-out"
+                  animationBegin={0}
                   className="cursor-pointer"
                   onClick={(entry: any) => {
                     const rawVal = entry && (entry[chart.xAxis] || entry.payload?.[chart.xAxis] || entry.name);
@@ -324,7 +335,10 @@ const ChartCardItem: React.FC<ChartCardItemProps> = React.memo(({
                   name={`${chart.xAxis} vs ${chart.yAxis}`}
                   data={activeData}
                   fill="#3b82f6"
-                  isAnimationActive={false}
+                  isAnimationActive={true}
+                  animationDuration={550}
+                  animationEasing="ease-out"
+                  animationBegin={0}
                 />
               </ScatterChart>
             )}

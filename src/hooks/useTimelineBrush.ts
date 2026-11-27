@@ -13,6 +13,7 @@
  */
 
 import { useState, useCallback, useRef, useMemo, useEffect } from 'react';
+import { normalizeDateKey } from '../engine/profiler';
 
 // ── Types ──────────────────────────────────────────────────────────────
 
@@ -80,13 +81,13 @@ export function useTimelineBrush(
   rows: Record<string, any>[],
   dateColumnName: string | undefined
 ): TimelineBrushState {
-  // Extract and sort unique dates
+  // Extract and sort unique normalized dates (YYYY-MM-DD)
   const dateLabels = useMemo(() => {
     if (!dateColumnName) return [];
     const unique = new Set<string>();
     for (const row of rows) {
-      const val = row[dateColumnName];
-      if (val != null) unique.add(String(val));
+      const key = normalizeDateKey(row[dateColumnName]);
+      if (key) unique.add(key);
     }
     return Array.from(unique).sort();
   }, [rows, dateColumnName]);
@@ -188,8 +189,8 @@ export function useTimelineBrush(
 
     const indices: number[] = [];
     for (let i = 0; i < rows.length; i++) {
-      const val = String(rows[i][dateColumnName] ?? '');
-      if (val >= start && val <= end) {
+      const key = normalizeDateKey(rows[i][dateColumnName]);
+      if (key && key >= start && key <= end) {
         indices.push(i);
       }
     }

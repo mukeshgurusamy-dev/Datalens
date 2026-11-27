@@ -39,10 +39,13 @@ export const FilterBar: React.FC<FilterBarProps> = React.memo(({
     (c) => c.type === 'category' && c.topValues && c.topValues.length > 0
   );
 
-  const activeFiltersCount = Object.values(filters.selectedCategories).reduce(
-    (sum, arr) => sum + arr.length,
-    0
-  );
+  const activeFiltersCount =
+    Object.values(filters.selectedCategories).reduce(
+      (sum, arr) => sum + arr.length,
+      0
+    ) +
+    (filters.dateRange ? 1 : 0) +
+    (filters.searchQuery?.trim() ? 1 : 0);
 
   const toggleCategoryValue = (colName: string, value: string) => {
     const current = filters.selectedCategories[colName] || [];

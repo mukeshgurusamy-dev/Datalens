@@ -40,7 +40,6 @@ export function aggregateChartData(
 
     return Array.from(dateMap.entries())
       .sort((a, b) => a[0].localeCompare(b[0]))
-      .slice(0, 30)
       .map(([date, val]) => ({
         [xAxisCol]: date,
         [yAxisCol]: Math.round(val * 100) / 100,
@@ -162,17 +161,15 @@ export function buildChartRecommendations(schema: DatasetSchema): ChartRecommend
     const numCol = primaryNumeric.name;
     const timeData = aggregateChartData(rows, dateCol, numCol, 'area', schema.columns);
 
-    if (timeData.length > 1) {
-      recommendations.push({
-        id: 'chart-timeseries',
-        type: 'area',
-        title: `${primaryNumeric.name} Trend Over Time`,
-        description: `Temporal aggregation tracking ${primaryNumeric.name} by ${dateCol}.`,
-        xAxis: dateCol,
-        yAxis: numCol,
-        data: timeData,
-      });
-    }
+    recommendations.push({
+      id: 'chart-timeseries',
+      type: 'area',
+      title: `${primaryNumeric.name} Trend Over Time`,
+      description: `Temporal aggregation tracking ${primaryNumeric.name} by ${dateCol}.`,
+      xAxis: dateCol,
+      yAxis: numCol,
+      data: timeData,
+    });
   }
 
   // 2. Category Comparison (Category + Numeric Bar Chart)

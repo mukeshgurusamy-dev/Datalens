@@ -14,6 +14,21 @@ function assertFileSize(file: File) {
   }
 }
 
+function normalizeParsedRows(rows: Record<string, any>[]): Record<string, any>[] {
+  const sanitized = sanitizePlainObject<Record<string, any>[]>(rows);
+  for (let i = 0; i < sanitized.length; i++) {
+    const row = sanitized[i];
+    if (!row || typeof row !== 'object') continue;
+    for (const key of Object.keys(row)) {
+      const val = row[key];
+      if (val instanceof Date) {
+        row[key] = isNaN(val.getTime()) ? null : val.toISOString().replace('.000Z', 'Z');
+      }
+    }
+  }
+  return sanitized;
+}
+
 /**
  * Parses a CSV file using PapaParse with size limits and prototype-pollution sanitization.
  */
@@ -28,7 +43,7 @@ export function parseCSV(file: File): Promise<Record<string, any>[]> {
         if (results.errors.length > 0 && results.data.length === 0) {
           reject(new Error(results.errors[0].message));
         } else {
-          resolve(sanitizePlainObject<Record<string, any>[]>(results.data));
+          resolve(normalizeParsedRows(results.data as Record<string, any>[]));
         }
       },
       error: (err) => reject(err),
@@ -124,7 +139,7 @@ export function parseClipboardSpreadsheet(text: string): Record<string, any>[] {
   });
 
   if (result.data.length > 0) {
-    return sanitizePlainObject<Record<string, any>[]>(result.data);
+    return normalizeParsedRows(result.data as Record<string, any>[]);
   }
 
   const commaResult = Papa.parse(trimmed, {
@@ -133,5 +148,5 @@ export function parseClipboardSpreadsheet(text: string): Record<string, any>[] {
     dynamicTyping: true,
   });
 
-  return sanitizePlainObject<Record<string, any>[]>(commaResult.data);
+  return normalizeParsedRows(commaResult.data as Record<string, any>[]);
 }

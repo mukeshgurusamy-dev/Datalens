@@ -36,6 +36,10 @@ export function sanitizePlainObject<T = Record<string, unknown>>(
     return input as T;
   }
 
+  if (input instanceof Date) {
+    return (isNaN(input.getTime()) ? null : new Date(input.getTime())) as unknown as T;
+  }
+
   if (Array.isArray(input)) {
     return input.map((item) => sanitizePlainObject(item, depth + 1)) as unknown as T;
   }

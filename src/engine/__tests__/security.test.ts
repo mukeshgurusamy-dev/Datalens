@@ -5,7 +5,7 @@ import {
   validateExternalDatasetUrl,
   FILE_LIMITS,
 } from '../security';
-import { parseJSON } from '../parser';
+import { parseJSON, parseClipboardSpreadsheet } from '../parser';
 import { decodeDashboardState } from '../permalink';
 import { executeSqlQuery } from '../sql-engine';
 
@@ -68,5 +68,20 @@ describe('Web Security Hardening Suite', () => {
     expect(res.error).toBeUndefined();
     expect(res.rowCount).toBe(1);
     expect(res.rows[0].merchant).toBe('Amazon Web Services');
+  });
+
+  it('preserves Date objects in sanitizePlainObject and normalizes ISO timestamps in CSV parsing', () => {
+    const dt = new Date('2026-01-01T00:01:00Z');
+    const sanitized = sanitizePlainObject<{ timestamp: Date; amount: number }>({
+      timestamp: dt,
+      amount: 100,
+    });
+    expect(sanitized.timestamp).toBeInstanceOf(Date);
+    expect(sanitized.timestamp.toISOString()).toBe('2026-01-01T00:01:00.000Z');
+
+    const rows = parseClipboardSpreadsheet('txn_id\ttimestamp\tamount\nT1\t2026-01-01T00:01:00Z\t716.47');
+    expect(rows.length).toBe(1);
+    expect(typeof rows[0].timestamp).toBe('string');
+    expect(rows[0].timestamp).toBe('2026-01-01T00:01:00Z');
   });
 });

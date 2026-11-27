@@ -17,7 +17,7 @@ import React, { useRef, useCallback, useMemo } from 'react';
 import { motion } from 'motion/react';
 import { Calendar, ZoomIn } from 'lucide-react';
 import { useTimelineBrush } from '../hooks/useTimelineBrush';
-import { parseNumberValue } from '../engine/profiler';
+import { normalizeDateKey, parseNumberValue } from '../engine/profiler';
 import type { DatasetSchema } from '../types/dataset';
 
 // ── Props ──────────────────────────────────────────────────────────────
@@ -46,7 +46,8 @@ export const TimelineBrush: React.FC<TimelineBrushProps> = ({
 
     const agg = new Map<string, number>();
     for (const row of dataset.rows) {
-      const dateVal = String(row[dateColumnName] ?? '');
+      const dateVal = normalizeDateKey(row[dateColumnName]);
+      if (!dateVal) continue;
       const raw = row[numCol.name];
       const numVal = typeof raw === 'number' ? raw : parseNumberValue(raw);
       if (numVal !== null && !isNaN(numVal) && Number.isFinite(numVal)) {

@@ -133,4 +133,19 @@ describe('Heuristic Chart Recommender & KPI Suite - Quality Audit', () => {
       }
     }
   });
+
+  it('keeps Area Trend chart present when filtered down to 1 date or 0 matching rows', () => {
+    const saasData = SAMPLES.find((s) => s.id === 'sample-saas')!;
+    const schema = profileDataset('SaaS', saasData.rows);
+
+    const singleDaySchema = { ...schema, rowCount: 1, rows: [schema.rows[0]] };
+    const singleDayCharts = buildChartRecommendations(singleDaySchema);
+    expect(singleDayCharts[0].type).toBe('area');
+    expect(singleDayCharts[0].data.length).toBe(1);
+
+    const emptySchema = { ...schema, rowCount: 0, rows: [] };
+    const emptyCharts = buildChartRecommendations(emptySchema);
+    expect(emptyCharts[0].type).toBe('area');
+    expect(emptyCharts[0].data.length).toBe(0);
+  });
 });
