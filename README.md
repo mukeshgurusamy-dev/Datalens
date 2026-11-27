@@ -1,137 +1,131 @@
-# DataLens Engine 🔬📊
-> **Universal, Client-Side Business Intelligence & Analytics Engine**  
-> *Architected with React 19 Concurrent Internals, TypeScript 7, Tailwind CSS v4, Web Workers, and Vitest.*
+<div align="center">
+  <img src="public/datalens-logo.svg" width="64" height="64" alt="DataLens Logo" />
+  <h1>DataLens</h1>
+  <h3><strong>Private. Instant. Zero-Server.</strong></h3>
+  <p>
+    <strong>Free • Fast • Secure • 100% Client-Side Analytics Engine</strong>
+  </p>
+  <p>
+    <a href="https://mukeshgurusamy-dev.github.io/Datalens/"><strong>Launch Live App →</strong></a>
+  </p>
 
-[![React 19](https://img.shields.io/badge/React-19.3-61dafb?logo=react&logoColor=black)](https://react.dev)
-[![TypeScript](https://img.shields.io/badge/TypeScript-7.0-3178c6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
-[![Vite 8](https://img.shields.io/badge/Vite-8.3-646cff?logo=vite&logoColor=white)](https://vitejs.dev)
-[![Tailwind CSS v4](https://img.shields.io/badge/Tailwind_CSS-v4-38bdf8?logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
-[![Vitest](https://img.shields.io/badge/Vitest-104_Tests_Passing-729b1b?logo=vitest&logoColor=white)](https://vitest.dev)
-[![Web Workers](https://img.shields.io/badge/Web_Workers-Multi--Threaded-orange)](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API)
-[![Zero Backend Latency](https://img.shields.io/badge/Latency-Sub--Millisecond-emerald)](#)
-
----
-
-## 🌟 Executive Summary
-
-**DataLens** is an advanced, privacy-first business intelligence and analytics engine operating **100% inside the browser**. 
-
-Traditional enterprise BI platforms (Tableau, PowerBI, Looker) require cloud database servers, expensive user licenses, and transmission of sensitive customer data across third-party networks. **DataLens eliminates this entirely**: it ingests arbitrary tabular datasets (CSV, Excel `.xlsx`, JSON, Google Sheets, or clipboard paste), automatically infers statistical schemas, renders interactive executive dashboards, evaluates client-side SQL, and exports boardroom-grade dossiers with **zero server dependencies and zero backend latency**.
-
----
-
-## 🏛️ System Architecture
-
-```
-┌──────────────────────────────────────────────────────────────────────────────────────────────────┐
-│                                       USER BROWSER RUNTIME                                       │
-│                                                                                                  │
-│  ┌───────────────────────┐    ┌───────────────────────────┐    ┌──────────────────────────────┐  │
-│  │   DATA INGESTION      │    │    IN-MEMORY COMPUTE      │    │      REACT 19 UI CANVAS      │  │
-│  │  - CSV / TSV / TXT    ├───►│  - Column Profiler        ├───►│  - Concurrent Transitions    │  │
-│  │  - Excel (.xlsx/.xls) │    │  - AST SQL Parser         │    │  - 60 FPS Virtual Grid       │  │
-│  │  - Clipboard (Ctrl+V) │    │  - AST Formula Engine     │    │  - Coordinated Cross-Filter  │  │
-│  │  - Remote URL Fetch   │    │  - Holt-Winters Forecast  │    │  - Timeline Brush & Zoom     │  │
-│  └───────────────────────┘    └─────────────┬─────────────┘    └──────────────┬───────────────┘  │
-│                                             │                                 │                  │
-│                                             ▼                                 ▼                  │
-│                               ┌───────────────────────────┐    ┌──────────────────────────────┐  │
-│                               │   BACKGROUND WEB WORKER   │    │     EXECUTIVE EXPORT HUB     │  │
-│                               │  - Pearson Correlation    │    │  - A4 Landscape PDF Dossier  │  │
-│                               │  - Race Cancellation      │    │  - Multi-Sheet Excel (.xlsx) │  │
-│                               │  - 0ms Main-Thread Delay  │    │  - Cleaned RFC-4180 CSV      │  │
-│                               └───────────────────────────┘    └──────────────────────────────┘  │
-└──────────────────────────────────────────────────────────────────────────────────────────────────┘
-```
+  <p>
+    <img src="https://img.shields.io/badge/Zero_Server-100%25_Client--Side-10b981?style=flat-square" alt="Zero Server" />
+    <img src="https://img.shields.io/badge/React-19.3-61dafb?style=flat-square&logo=react&logoColor=black" alt="React 19" />
+    <img src="https://img.shields.io/badge/TypeScript-7.0-3178c6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript 7" />
+    <img src="https://img.shields.io/badge/Vite-8.3-646cff?style=flat-square&logo=vite&logoColor=white" alt="Vite 8" />
+    <img src="https://img.shields.io/badge/Tailwind_CSS-v4-38bdf8?style=flat-square&logo=tailwindcss&logoColor=white" alt="Tailwind CSS v4" />
+    <img src="https://img.shields.io/badge/Vitest-120_Tests_Passing-729b1b?style=flat-square&logo=vitest&logoColor=white" alt="120 Tests Passing" />
+  </p>
+</div>
 
 ---
 
-## 🚀 Key Architectural Capabilities
+## Why DataLens? (What It Solves & How)
 
-### 1. In-Browser SQL Studio (Pure TypeScript AST Engine)
-* **Client-Side Lexer & Parser:** Full SQL tokenizer written from scratch without external SQL dependencies.
-* **Dialect Support:** Evaluates `SELECT`, `WHERE` (`AND`, `=`, `!=`, `>`, `<`, `>=`, `<=`, `LIKE`), `GROUP BY`, `ORDER BY`, `LIMIT`, and aggregations (`SUM`, `AVG`, `COUNT`, `MIN`, `MAX`) against in-memory datasets in **< 1ms**.
-* **1-Click Chart Injection:** Seamlessly compiles query outputs into Recharts visualization configurations and injects them as live dashboard cards.
+Traditional BI platforms (Tableau, Power BI, Looker) require cloud databases, paid seats, backend ETL pipelines, and uploading sensitive spreadsheets to external servers.
 
-### 2. Custom Formula Studio & Calculated Columns
-* **Safe Expression Parser:** Recursive-descent AST evaluator supporting arithmetic (`+`, `-`, `*`, `/`, `%`, `**`), comparisons, nested functions (`ABS`, `ROUND`, `CEIL`, `FLOOR`, `SQRT`, `LOG`, `MIN`, `MAX`, `IF`, `LEN`, `UPPER`, `LOWER`, `CONCAT`), and `[Column Name]` references without ever using dangerous `eval()` or `Function()`.
-* **Typing Optimization (`useDeferredValue`):** Defers per-row live calculation previews across dataset records, guaranteeing fluid 60 FPS typing responsiveness.
+**DataLens solves this with a zero-server, browser-native analytics engine.** Your data never leaves your device — parsing, schema profiling, SQL queries, forecasting, correlation math, and PDF/Excel generation all execute locally inside your browser at 60 FPS.
 
-### 3. Executive "What-If" Sensitivity Simulator
-* **`useReducer` State Machine:** Modeled as an immutable state machine managing multi-slider sensitivity adjustments (Price/Revenue adjustment, Volume multiplier, Churn reduction).
-* **Multiplicative Compound Lift:** Evaluates $\prod(1 + \Delta\%)$ across grouped categories to project non-linear business impacts.
-* **Dual-Bar Overlay:** Visualizes baseline metrics alongside projected scenarios with color-coded net financial deltas.
-
-### 4. Background Web Worker Compute Pipeline (`useWorkerCompute`)
-* **Dedicated OS Thread Offloading:** Spawns an inline Web Worker via Blob URL to compute full $N \times N$ Pearson Correlation Matrices ($r \in [-1, +1]$) completely off the React main thread (**0ms main-thread delay**).
-* **Race Condition Guard:** Automated request ID matching ensures rapid filter transitions immediately cancel and discard stale background computations.
-
-### 5. 60 FPS Virtual Grid (`useVirtualGrid`)
-* **Zero-Dependency Windowing Hook:** Custom-built React DOM windowing engine that measures container offsets and dynamically mounts only the visible viewport records (`~15-20` nodes) instead of mounting thousands of DOM elements.
-* **Telemetry Badge:** Live indicator displays active mounted node counts and memory efficiency.
-
-### 6. Interactive Coordinated Multiple Views & Cross-Filtering
-* **Direct Chart Filtering:** Clicking any chart bar, scatter point, or donut slice instantly cascades cross-filters across the entire dashboard canvas.
-* **Interactive Timeline Brush:** Custom `useTimelineBrush` hook powering a dual-handle SVG sparkline track with smooth drag-zoom and 1-click date presets (`7D`, `30D`, `90D`, `YTD`, `All`).
-
-### 7. Executive Lenses & Statistical Insights
-* **Leadership Personas:** Toggle between **[ CFO Capital & Risk | COO Throughput & SLA | CMO Growth & Market Share ]** to dynamically restructure KPI cards according to executive priorities.
-* **Deterministic Insights:** Automatic root-cause attribution, Tukey's fences outlier identification ($IQR = Q_3 - Q_1$), and Holt-Winters double-exponential trajectory forecasting with 95% confidence bands.
-
-### 8. Multi-Format Executive Export Hub
-* **📄 Executive PDF Dossier:** Generates multi-page A4 documents with **Landscape (16:9 Presentation Deck)** or **Portrait** orientation, running page counts, custom recipient headers, and confidentiality stamps (`CONFIDENTIAL & PROPRIETARY`, `INTERNAL ONLY`).
-* **📊 Multi-Sheet Excel Workbook (`.xlsx`):** Direct client-side generation of structured Excel files with Sheet 1 (Executive Summary), Sheet 2 (Cleaned Filtered Records), and Sheet 3 (Statistical Correlations).
-* **💾 Filtered RFC-4180 CSV:** Automated field escaping with UTF-8 Byte Order Mark (`\uFEFF`) for seamless international Excel viewing.
-* **🖼️ 2x Retina PNG Snapshot:** Crisp high-DPI rasterization for presentations and Slack.
-* **📋 Markdown Executive Memo:** 1-click formatted summary ready for Notion or email briefings.
-
-### 9. Time-Travel History & Telemetry HUD
-* **Immutable State Stack:** Undo/Redo engine listening to <kbd>Ctrl+Z</kbd> / <kbd>Ctrl+Y</kbd> with an interactive visual history drawer.
-* **React 19 Native Profiler HUD:** Decoupled external store (`useSyncExternalStore`) monitoring real-time fiber commit durations and transition delays.
-
----
-
-## 🛠️ Tech Stack & Dependencies
-
-| Category | Technology | Purpose |
+| Challenge | Traditional Cloud BI | DataLens (Zero-Server Engine) |
 | :--- | :--- | :--- |
-| **Framework** | React 19.3 | Concurrent scheduling, `useTransition`, `useDeferredValue`, `useSyncExternalStore` |
-| **Language** | TypeScript 7.0 | Strict type safety, AST interfaces, zero compilation warnings |
-| **Styling** | Tailwind CSS v4 | High-performance CSS engine with modern dark-mode palettes |
-| **Visualizations** | Recharts 3.x | SVG Area, Bar, Donut, and Scatter plots with custom tooltips |
-| **Motion** | Motion 14.x | Spring physics animations for drawers, modals, and card transitions |
-| **Processing** | SheetJS (`xlsx`), PapaParse | Universal multi-format ingestion and `.xlsx` multi-sheet synthesis |
-| **Document Engine** | `jspdf`, `html-to-image` | Vectorized PDF pagination and 2x Retina rasterization |
-| **Test Suite** | Vitest 5.1 | 104 automated tests across 17 test suites |
+| **Data Privacy** | Files uploaded to third-party cloud servers | **100% local in-browser memory** — zero server uploads |
+| **Cost & Setup** | Paid licenses, DB provisioning, login walls | **Completely free**, instant open-and-drop in any browser |
+| **Speed & Latency** | Network round-trips on every filter click | **Sub-millisecond local compute** + Web Worker offloading |
+| **Ad-Hoc Analysis** | Separate tools for SQL, formulas, and charts | **Unified studio**: Charts, SQL, Formulas, What-If & Exports |
 
 ---
 
-## 🧪 Automated Test Suite
+## Architecture Overview
 
-DataLens is rigorously covered by **104 automated unit and integration tests** verifying parser correctness, mathematical ground truth, and UI hooks:
-
-```bash
-# Run the complete test suite
-npx vitest run
-
-# Test Coverage Summary:
-# ✓ src/engine/__tests__/sql-engine.test.ts (7 tests)
-# ✓ src/engine/__tests__/formula-engine.test.ts (19 tests)
-# ✓ src/engine/__tests__/scenario-simulator.test.ts (6 tests)
-# ✓ src/engine/__tests__/worker-tasks.test.ts (7 tests)
-# ✓ src/engine/__tests__/forecasting.test.ts (5 tests)
-# ✓ src/engine/__tests__/lttb.test.ts (5 tests)
-# ✓ src/engine/__tests__/outliers.test.ts (6 tests)
-# ✓ src/engine/__tests__/profiler.test.ts (10 tests)
-# ✓ src/engine/__tests__/filter.test.ts (8 tests)
-# ✓ src/engine/__tests__/exporter.test.ts (3 tests)
-# ✓ src/hooks/__tests__/useTimelineBrush.test.ts (5 tests)
-# Total: 104 passed across 17 test files
+```
+┌──────────────────────────────────────────────────────────────────────────────────────────┐
+│                                 USER BROWSER RUNTIME                                     │
+│                                                                                          │
+│  ┌─────────────────────┐    ┌─────────────────────────┐    ┌──────────────────────────┐  │
+│  │   DATA INGESTION    │    │    IN-MEMORY ENGINE     │    │    REACT 19 CANVAS       │  │
+│  │ • CSV / TSV / TXT   ├───►│ • Type & Date Profiler  ├───►│ • Area-First Charts      │  │
+│  │ • Excel (.xlsx)     │    │ • AST SQL Studio        │    │ • 60 FPS Virtual Grid    │  │
+│  │ • JSON & Clipboard  │    │ • Safe Formula AST      │    │ • Cross-Filter & Brush   │  │
+│  │ • HTTPS / GSheets   │    │ • Holt +7D Forecast     │    │ • CFO / COO / CMO Lenses │  │
+│  └─────────────────────┘    └────────────┬────────────┘    └─────────────┬────────────┘  │
+│                                          │                               │               │
+│                                          ▼                               ▼               │
+│                             ┌─────────────────────────┐    ┌──────────────────────────┐  │
+│                             │  BACKGROUND WEB WORKER  │    │   EXECUTIVE EXPORT HUB   │  │
+│                             │ • N×N Pearson Matrix    │    │ • A4/Letter PDF Dossier  │  │
+│                             │ • 0ms UI Thread Block   │    │ • Multi-Sheet .xlsx      │  │
+│                             │ • Race-Safe Cancels     │    │ • RFC-4180 CSV & 2x PNG  │  │
+│                             └─────────────────────────┘    └──────────────────────────┘  │
+└──────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 💻 Quickstart
+## Core Features
+
+### 1. Universal Client-Side Ingestion
+* **Multi-Format Dropzone:** Drag and drop `.csv`, `.tsv`, `.txt`, `.xlsx`, or `.json` files directly into browser memory (up to 50 MB).
+* **Instant Clipboard Paste:** Press <kbd>Ctrl</kbd>+<kbd>V</kbd> anywhere on the landing screen to analyze tables copied from Excel or Google Sheets.
+* **Remote HTTPS / Google Sheets Fetch:** Load public CSV URLs or Google Sheets links directly from the browser with SSRF and payload-size protections.
+* **Built-In Sample Datasets:** Explore immediately with **SaaS Revenue Metrics**, **Retail E-Commerce Orders**, or **People & HR Analytics**.
+
+### 2. Automatic Schema Profiling & Area-First Visualizations
+* **Smart Type Inference:** Automatically classifies `date` (including ISO-8601 timestamps), `number` (currencies, percentages, accounting negatives), `category`, `boolean`, `id`, and `text`.
+* **Area Trend Always First:** Guarantees an **Area Trend** visualization appears first for every dataset — aggregated by day when dates exist, or via sequential record progression when no date column is present.
+* **LTTB Downsampling:** Uses Largest-Triangle-Three-Buckets (`lttbDownsample`) to preserve visual peaks and valleys across large datasets without DOM bloat.
+* **Scroll-Triggered Animations & Customizer:** Charts animate smoothly as you scroll them into view, and every card can be customized (type, X-axis, Y-axis) via the slide-over Chart Customizer.
+
+### 3. Coordinated Cross-Filtering & Timeline Brush
+* **Responsive Filter Bar:** Multi-select category filters with live search, row counts, and a viewport-safe bottom-sheet menu on mobile devices.
+* **Click-to-Filter Charts:** Click any Bar or Donut slice to cross-filter every KPI card, chart, and table row simultaneously.
+* **Interactive Timeline Brush:** Dual-handle SVG sparkline brush with drag-zoom and 1-click presets (`7D`, `30D`, `90D`, `YTD`, `All`).
+
+### 4. Forecasting, Outliers & Executive Lenses
+* **Holt-Winters 7-Day Forecast:** Toggle **Forecast +7D** on Area Trend charts to project a 7-day trend line with animated 95% confidence bands.
+* **Executive Personas:** Switch between **CFO** (Chief Financial Officer), **COO** (Chief Operating Officer), and **CMO** (Chief Marketing Officer) lenses to tailor KPIs to financial exposure, operational SLA & Tukey's Fences outliers, or merchant/category growth.
+
+### 5. In-Browser SQL Studio & Safe Formula Studio
+* **Pure TypeScript AST SQL Engine:** Run `SELECT`, `WHERE` (`=`, `!=`, `>`, `<`, `>=`, `<=`, `LIKE`, `IN`), `GROUP BY`, `ORDER BY`, `LIMIT`, and aggregates (`SUM`, `AVG`, `COUNT`, `MIN`, `MAX`) in under 1 ms — and inject query results directly as dashboard charts.
+* **No-`eval` Formula Studio:** Create calculated columns using a recursive-descent AST evaluator supporting arithmetic, comparisons, `[Column]` references, and functions (`ABS`, `ROUND`, `CEIL`, `FLOOR`, `SQRT`, `LOG`, `MIN`, `MAX`, `IF`, `LEN`, `UPPER`, `LOWER`, `CONCAT`), paired with `useDeferredValue` for lag-free previews.
+
+### 6. Modeling & Matrix Tab
+* **What-If Sensitivity Simulator:** `useReducer`-driven multi-slider simulator projecting compound business lift and category-level deltas.
+* **Background Web Worker Correlation Matrix:** Computes full $N \times N$ Pearson correlation matrices off the main thread (`useWorkerCompute`) with automatic race-condition cancellation.
+
+### 7. 60 FPS Virtualized Raw Records Explorer
+* **Custom Windowing Hook (`useVirtualGrid`):** Renders only visible viewport rows (`~15–20` DOM nodes) for smooth scrolling across tens of thousands of records, with toggleable Paginated view and deferred instant search.
+
+### 8. Export Hub, Permalink Sharing, Time-Travel & Telemetry
+* **Flexible Executive Export:** Download customized **PDF dossiers** (A4/Letter, Landscape/Portrait, Dark/Light theme), **multi-sheet `.xlsx` workbooks**, **RFC-4180 CSV** (with UTF-8 BOM & formula-injection neutralization), **2x Retina PNG**, or **Markdown summaries**.
+* **Zero-Backend Permalink Sharing:** Encode dashboard state, filters, and custom charts into a compact URL hash (`#share=...`).
+* **Time-Travel History & Live Profiler HUD:** Undo/redo dashboard states (<kbd>Ctrl</kbd>+<kbd>Z</kbd> / <kbd>Ctrl</kbd>+<kbd>Y</kbd>) and inspect real-time render commit timings in both development and production.
+
+---
+
+## Security & Privacy Hardening
+
+* **Zero Network Data Transmission:** Uploaded files are parsed and analyzed exclusively in client-side memory.
+* **Prototype Pollution Defense (`CWE-1321`):** Strips `__proto__`, `constructor`, and `prototype` keys across JSON/CSV/clipboard ingestion while preserving `Date` values.
+* **Spreadsheet Formula Injection Guard (`CWE-1236`):** Neutralizes dangerous leading characters (`=`, `+`, `-`, `@`, `\t`, `\r`) on CSV/Excel exports while keeping valid negative numbers intact.
+* **SSRF & Resource Cap (`CWE-918`):** Enforces `https://`-only remote CSV fetches, blocks localhost/private IP ranges, and caps file/clipboard/fetch sizes with request timeouts.
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+| :--- | :--- |
+| **UI & Concurrency** | React `19.3` (`useTransition`, `useDeferredValue`, `useSyncExternalStore`) |
+| **Language & Build** | TypeScript `7.0`, Vite `8.3` (manual vendor chunk splitting & lazy routes) |
+| **Styling & Motion** | Tailwind CSS `v4`, Motion `14.14`, Lucide Icons |
+| **Visualizations** | Recharts `3.11` + custom LTTB downsampling & Holt forecasting |
+| **Parsing & Export** | PapaParse `5.7`, `read-excel-file`, `write-excel-file`, `jspdf`, `html-to-image` |
+| **Testing & Linting** | Vitest `5.1` (`120` tests across `19` suites), `oxlint` |
+
+---
+
+## Quickstart
 
 ```bash
 # 1. Clone the repository
@@ -141,30 +135,29 @@ cd Datalens
 # 2. Install dependencies
 npm install
 
-# 3. Start local development server
+# 3. Start local dev server
 npm run dev
 
-# 4. Run production build & type check
+# 4. Run type-check, test suite, and production build
+npm test
 npm run build
 ```
 
-Open [http://localhost:5174](http://localhost:5174) in your browser to start exploring.
-
 ---
 
-## ⌨️ Power-User Keyboard Shortcuts
+## Keyboard Shortcuts
 
 | Shortcut | Action |
 | :--- | :--- |
-| <kbd>Ctrl</kbd> + <kbd>V</kbd> | Paste spreadsheet cells directly from Excel or Google Sheets |
-| <kbd>Ctrl</kbd> + <kbd>Z</kbd> | Time-Travel Undo (Restore previous dashboard state) |
-| <kbd>Ctrl</kbd> + <kbd>Y</kbd> | Time-Travel Redo (Advance forward in history) |
-| <kbd>Ctrl</kbd> + <kbd>Enter</kbd> | Execute query in SQL Studio |
-| <kbd>?</kbd> | Toggle Keyboard Shortcuts cheat sheet |
-| <kbd>Esc</kbd> | Close any active modal or slide-over drawer |
+| <kbd>Ctrl</kbd> + <kbd>V</kbd> | Paste spreadsheet data from Excel or Google Sheets |
+| <kbd>Ctrl</kbd> + <kbd>Z</kbd> | Undo (Time-Travel History) |
+| <kbd>Ctrl</kbd> + <kbd>Y</kbd> | Redo (Time-Travel History) |
+| <kbd>Ctrl</kbd> + <kbd>Enter</kbd> | Run query in SQL Studio |
+| <kbd>?</kbd> | Open Keyboard Shortcuts |
+| <kbd>Esc</kbd> | Close active modal or drawer |
 
 ---
 
-## 📄 License
+## License
 
-MIT License — free for personal and commercial exploration.
+MIT License — free for personal and commercial use.
