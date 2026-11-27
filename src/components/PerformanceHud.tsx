@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion } from 'motion/react';
 import { useTelemetry } from '../engine/telemetry-store';
 import { Activity, X, Gauge, Zap, Layers, RefreshCw } from 'lucide-react';
 
@@ -24,8 +25,11 @@ const PerformanceHudContent: React.FC<{
     : 'text-rose-400 bg-rose-500/10 border-rose-500/20';
 
   return (
-    <div
-      className="fixed bottom-3 right-3 sm:bottom-6 sm:right-6 z-50 w-[calc(100vw-1.5rem)] sm:w-96 max-h-[75dvh] flex flex-col rounded-xl bg-[#101014]/95 border border-zinc-800 shadow-2xl backdrop-blur-xl overflow-hidden font-sans text-xs transition-all"
+    <motion.div
+      initial={{ opacity: 0, y: 16, scale: 0.96 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ type: 'spring', stiffness: 420, damping: 32 }}
+      className="fixed bottom-3 right-3 sm:bottom-6 sm:right-6 z-50 w-[calc(100vw-1.5rem)] sm:w-96 max-h-[75dvh] flex flex-col rounded-xl bg-[#101014]/95 border border-zinc-800 shadow-2xl backdrop-blur-xl overflow-hidden font-sans text-xs"
       style={{ marginBottom: 'env(safe-area-inset-bottom)' }}
     >
       {/* Header */}
@@ -33,6 +37,7 @@ const PerformanceHudContent: React.FC<{
         <div className="flex items-center gap-2">
           <div className="relative">
             <Activity className="w-4 h-4 text-emerald-400" />
+            <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
           </div>
           <span className="font-semibold text-white tracking-tight">React 19 Telemetry HUD</span>
           <span className={`text-[10px] px-1.5 py-0.5 rounded border font-mono ${statusColor}`}>
@@ -141,11 +146,14 @@ const PerformanceHudContent: React.FC<{
                       ? 'bg-amber-400/80 hover:bg-amber-300'
                       : 'bg-rose-400/80 hover:bg-rose-300';
                   return (
-                    <div
-                      key={i}
+                    <motion.div
+                      key={c.commitTime ?? i}
+                      initial={{ scaleY: 0, opacity: 0.4 }}
+                      animate={{ scaleY: 1, opacity: 1 }}
+                      transition={{ duration: 0.3, delay: i * 0.015, ease: 'easeOut' }}
                       title={`${c.id}: ${Math.round(c.actualDuration * 100) / 100}ms (${c.phase})`}
-                      className={`flex-1 rounded-sm transition-all cursor-pointer ${bg}`}
-                      style={{ height: `${h}%` }}
+                      className={`flex-1 rounded-sm transition-colors cursor-pointer ${bg}`}
+                      style={{ height: `${h}%`, transformOrigin: 'bottom' }}
                     />
                   );
                 })}
@@ -179,7 +187,7 @@ const PerformanceHudContent: React.FC<{
         <span>Instrumented via native React &lt;Profiler&gt;</span>
         <span className="text-emerald-400 font-mono">60 FPS Target</span>
       </div>
-    </div>
+    </motion.div>
   );
 };
 
